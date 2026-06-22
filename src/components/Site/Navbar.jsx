@@ -1,214 +1,241 @@
 /** @format */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@heroui/react";
-import { ChartBarStacked, CircleXmark } from "@gravity-ui/icons";
+import { FaUser, FaSignOutAlt, FaThLarge } from "react-icons/fa"; // 👈 Font Awesome Icons
+import { useRouter } from "next/navigation";
+import { authClient, useSession } from "@/lib/auth-client";
+import Image from "next/image";
 
-// ১. নেভিগেশন লিংকগুলোর অ্যারে (আপনার প্রোজেক্ট অনুযায়ী চেঞ্জ করতে পারেন)
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop" },
-  { href: "/dashboard", label: "Dashboard" },
-];
-
-export default function Navbar({ user = null, isPending = false, onSignOut }) {
+export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
 
-  const [scrolled, setScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => window.removeEventListener("scroll", onScroll);
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = "/auth/signin";
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
+
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "Products", href: "/products" },
+    { name: "Categories", href: "/categories" },
+    { name: "Dashboard", href: "/dashboard" },
+  ];
+
   return (
-    <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        scrolled
-          ? "border-b border-[#bec9c2] bg-[#f7faf6]/85 backdrop-blur-xl shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
-          : "border-b border-transparent bg-transparent"
-      }`}
-    >
-      {/* Implements 48px padding boundaries on desktop layouts */}
-      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-12">
-        {/* LOGO AREA - NAISELL BRAND */}
-        <Link href="/" className="flex shrink-0 items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#00543c] shadow-md text-white">
-            <span className="font-bold text-base tracking-tight">N</span>
-          </div>
-          <span
-            className="text-lg font-semibold tracking-tight text-[#181d1a]"
-            style={{ fontFamily: "Plus Jakarta Sans" }}
-          >
-            NaiSell
-          </span>
+    <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#171717]/80 backdrop-blur-md py-4 px-6">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* LOGO AREA */}
+        <Link href="/" className="text-3xl font-bold tracking-tight">
+          <span className="text-blue-500">Nai</span>
+          <span className="text-orange-500">Sell</span>
         </Link>
 
-        {/* DESKTOP NAVIGATION PILLS */}
-        <nav className="hidden md:flex items-center gap-1">
-          {NAV_LINKS.map((item) => {
-            const active =
-              pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(item.href));
+        {/* DESKTOP NAVIGATION LINKS */}
+        <div className="hidden lg:flex items-center gap-8">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className="relative rounded-full px-4 py-2 text-sm font-medium transition-colors duration-200"
-                style={{ fontFamily: "Inter" }}
+                key={link.name}
+                href={link.href}
+                className={`text-sm font-medium transition-colors ${
+                  isActive
+                    ? "text-blue-500 font-semibold"
+                    : "text-slate-300 hover:text-white"
+                }`}
               >
-                {active && (
-                  <motion.span
-                    layoutId="nav-pill"
-                    className="absolute inset-0 rounded-full bg-[#ebefea]"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
-                  />
-                )}
-                <span
-                  className={`relative z-10 ${active ? "text-[#181d1a]" : "text-[#3f4943] hover:text-[#181d1a]"}`}
-                >
-                  {item.label}
-                </span>
+                {link.name}
               </Link>
             );
           })}
-        </nav>
+        </div>
 
-        {/* RIGHT ACTION CONTROLS */}
+        {/* RIGHT ACTIONS BLOCK */}
         <div className="flex items-center gap-4">
-          <div className="hidden items-center gap-3 md:flex">
-            {!isPending &&
-              (user ? (
-                <div
-                  className="flex items-center gap-4 text-sm font-medium text-[#181d1a]"
-                  style={{ fontFamily: "Inter" }}
-                >
-                  <div className="flex items-center gap-1.5 text-[#3f4943]">
-                    <span className="text-[#096c4f] text-xs">●</span>
-                    <span>Hi, {user.name}!</span>
-                  </div>
-                  <Button
-                    onClick={onSignOut}
-                    variant="bordered"
-                    className="h-9 border-[#6f7a73] text-[#181d1a] hover:bg-[#ebefea] px-4 font-medium rounded-[8px]"
-                  >
-                    Sign Out
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link href="/auth/signin">
-                    <Button
-                      variant="light"
-                      className="rounded-[8px] h-9 text-sm font-medium text-[#3f4943] hover:text-[#181d1a] hover:bg-[#ebefea]"
-                    >
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button className="h-9 bg-[#835400] px-5 text-sm font-semibold text-white hover:bg-[#6e4600] rounded-[8px] shadow-sm">
-                      Register
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-          </div>
+          {/* 🔐 LOGGED OUT STATES */}
+          {!session && (
+            <div className="hidden sm:flex items-center gap-3">
+              <Link href="/auth/login">
+                <button className="inline-flex items-center justify-center font-semibold text-xs text-slate-300 hover:text-white h-9 px-4 rounded-xl hover:bg-white/5 transition">
+                  Login
+                </button>
+              </Link>
+              <Link
+                href="/auth/register"
+                className="inline-flex items-center justify-center font-semibold text-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 transition h-9 px-4 rounded-xl"
+              >
+                Register
+              </Link>
+            </div>
+          )}
 
-          {/* MOBILE TOGGLE BLOCK */}
-          <Button
-            isIconOnly
-            variant="light"
-            onClick={() => setIsMenuOpen((v) => !v)}
-            className="text-[#181d1a] hover:bg-[#ebefea] md:hidden rounded-[8px]"
+          {/* ✅ LOGGED IN USER DROPDOWN (FONT AWESOME ICONS) */}
+          {session && session?.user && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center transition-transform hover:scale-105 outline-none focus:outline-none cursor-pointer"
+              >
+                <Image
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 rounded-full object-cover border border-blue-500 shadow-md shadow-blue-500/10"
+                  src={session?.user?.image || "/avatar-placeholder.png"}
+                  alt="avatar"
+                />
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-3 w-56 bg-slate-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl py-2 z-55 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* User Account Details */}
+                  <div className="px-4 py-2.5 border-b border-white/5 mb-1.5 cursor-default">
+                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">
+                      {session?.user?.role || "User"} Account
+                    </p>
+                    <p className="font-bold text-white text-sm mt-0.5 truncate">
+                      {session?.user?.name}
+                    </p>
+                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                      {session?.user?.email}
+                    </p>
+                  </div>
+
+                  {/* Actions Area with Fa Icons */}
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setDropdownOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition cursor-pointer"
+                  >
+                    <FaThLarge className="text-slate-400 text-sm shrink-0" />
+                    <span>My Dashboard</span>
+                  </Link>
+
+                  <Link
+                    href="/settings"
+                    onClick={() => setDropdownOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition cursor-pointer"
+                  >
+                    <FaUser className="text-slate-400 text-sm shrink-0" />
+                    <span>Profile Settings</span>
+                  </Link>
+
+                  <div className="border-t border-white/5 my-1.5" />
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/5 transition cursor-pointer"
+                  >
+                    <FaSignOutAlt className="text-sm shrink-0 text-red-400" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MOBILE TOGGLE HAMBURGER BUTTON */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-1.5 text-slate-400 hover:text-white lg:hidden transition outline-none"
             aria-label="Toggle Menu"
           >
-            {isMenuOpen ? (
-              <CircleXmark className="h-5 w-5" />
-            ) : (
-              <ChartBarStacked className="h-5 w-5" />
-            )}
-          </Button>
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {mobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* MOBILE EXPANSION SURFACE */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="border-t border-[#bec9c2] bg-[#f7faf6] md:hidden shadow-lg"
-          >
-            <div className="flex flex-col gap-1 px-4 py-4">
-              <ul className="space-y-1">
-                {NAV_LINKS.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="block rounded-xl px-4 py-3 text-base font-medium text-[#3f4943] transition hover:bg-[#ebefea] hover:text-[#181d1a]"
-                      style={{ fontFamily: "Inter" }}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </li> // <--- এখানে টাইপো ফিক্স করা হয়েছে (</td> থেকে </li> করা হয়েছে)
-                ))}
-              </ul>
+      {/* MOBILE EXPANDABLE MENU */}
+      {mobileMenuOpen && (
+        <div className="mt-3 rounded-2xl border border-white/10 bg-slate-950/95 p-5 backdrop-blur-xl lg:hidden shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex flex-col gap-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`text-sm py-1 transition ${
+                  pathname === link.href
+                    ? "text-blue-500 font-semibold"
+                    : "text-slate-300 hover:text-white"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))}
 
-              <div className="mt-2 border-t border-[#bec9c2] pt-4">
-                {!isPending &&
-                  (user ? (
-                    <div className="flex flex-col gap-3 px-2">
-                      <span className="text-base font-medium text-[#181d1a]">
-                        Hi, {user.name}!
-                      </span>
-                      <Button
-                        onClick={onSignOut}
-                        variant="flat"
-                        className="w-full bg-[#ffdad6] text-[#93000a] hover:bg-[#ffb956]/20 rounded-[8px] font-medium"
-                      >
-                        Sign Out
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link
-                        href="/auth/signin"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Button
-                          variant="bordered"
-                          className="w-full rounded-[8px] border-[#6f7a73] text-[#181d1a] hover:bg-[#ebefea]"
-                        >
-                          Login
-                        </Button>
-                      </Link>
-                      <Link
-                        href="/register"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Button className="w-full rounded-[8px] bg-[#835400] font-semibold text-white hover:bg-[#6e4600]">
-                          Register
-                        </Button>
-                      </Link>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
+            {!session && (
+              <>
+                <div className="h-px bg-white/10 my-1" />
+                <div className="flex flex-col gap-3">
+                  <Link
+                    href="/auth/signin"
+                    className="font-medium text-slate-300 text-center text-sm transition py-2 rounded-xl hover:bg-white/5"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-500 py-2.5 text-center text-sm text-white font-medium transition hover:opacity-90"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Register
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </nav>
   );
 }

@@ -1,8 +1,11 @@
+/** @format */
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Site/Navbar";
-import Footer  from "@/components/Site/Footer";
-
+import Footer from "@/components/Site/Footer";
+import { ToastContainer } from "react-toastify"; // 👈 ১. এটি ইম্পোর্ট করুন
+import "react-toastify/dist/ReactToastify.css"; // 👈 ২. সিএসএস ইম্পোর্ট করুন
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,12 +25,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <Navbar />
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <Navbar/>
+        
+        <ToastContainer position="top-right" autoClose={3000} theme="colored" />
         {children}
         <Footer />
       </body>
     </html>
   );
 }
-
