@@ -9,6 +9,7 @@ import { FaUser, FaSignOutAlt, FaThLarge } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { authClient, useSession } from "@/lib/auth-client";
 import Image from "next/image";
+import Logo from "../Logo";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -45,7 +46,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "Products", href: "/src/app/(main)/products" },
+    { name: "Products", href: "/products" },
     { name: "Categories", href: "/categories" },
     { name: "Dashboard", href: "/dashboard" },
   ];
@@ -54,20 +55,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b border-outline-variant/30 bg-surface/80 backdrop-blur-md py-4 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-3 no-underline"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
-            <span className="text-base font-bold tracking-tight font-display">
-              N
-            </span>
-          </div>
-          <span className="text-lg font-bold tracking-tight text-on-surface font-display">
-            NaiSell
-          </span>
-        </Link>
+        <Logo />
 
         {/* Desktop Nav links */}
         <div className="hidden lg:flex items-center gap-8">
