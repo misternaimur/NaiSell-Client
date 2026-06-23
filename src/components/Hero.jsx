@@ -1,4 +1,3 @@
-/** @format */
 "use client";
 
 import React from "react";
@@ -14,27 +13,27 @@ import {
 
 export default function Hero() {
   return (
-    <section className="relative max-w-[1600px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 pt-12 md:pt-20 pb-16 md:pb-24 overflow-hidden bg-[#fafbfa]">
+    <section className="relative max-w-[1600px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 pt-12 md:pt-20 pb-16 md:pb-24 overflow-hidden bg-surface">
       <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-8 lg:gap-12 xl:gap-16">
         {/* LEFT: CONTENT AREA */}
         <div className="md:col-span-6 lg:col-span-7 space-y-6 lg:space-y-8 z-10">
           <div className="space-y-4 lg:space-y-5">
             {/* Tag/Badge */}
-            <span className="inline-block px-3 py-1 bg-[#00543c]/10 text-[#00543c] rounded-full text-xs font-semibold font-sans uppercase tracking-wider">
+            <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold font-sans uppercase tracking-wider">
               The Future of Resale
             </span>
 
             {/* Heading */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] xl:text-[58px] lg:leading-[60px] xl:leading-[68px] font-bold tracking-tight text-[#002b1e] font-sans">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] xl:text-[58px] lg:leading-[60px] xl:leading-[68px] font-bold tracking-tight text-on-surface font-display">
               Your Unused Items,
               <br />
-              <span className="text-[#00543c]">
+              <span className="text-primary">
                 Someone&lsquo;s Next Favorite Find
               </span>
             </h1>
 
             {/* Description */}
-            <p className="text-base lg:text-lg text-[#55635a] max-w-xl leading-relaxed font-sans">
+            <p className="text-base lg:text-lg text-on-surface-variant max-w-xl leading-relaxed font-sans">
               Experience an editorial-grade marketplace where quality meets
               trust. Buy, sell, and trade verified items with confidence on the
               continent&apos;s most sophisticated platform.
@@ -44,7 +43,7 @@ export default function Hero() {
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-4">
             <Link href="/products" passHref>
-              <Button className="bg-[#F2A93B] text-white text-sm lg:text-base font-semibold font-sans px-8 h-12 lg:h-14 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm">
+              <Button className="bg-secondary-container text-on-secondary-container text-sm lg:text-base font-semibold font-sans px-8 h-12 lg:h-14 rounded-[8px] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-sm">
                 Explore Products
               </Button>
             </Link>
@@ -52,7 +51,7 @@ export default function Hero() {
             <Link href="/sell" passHref>
               <Button
                 variant="bordered"
-                className="border-[#bec9c2] bg-white text-[#181d1a] hover:bg-[#f0f3f1] text-sm lg:text-base font-medium font-sans px-8 h-12 lg:h-14 rounded-xl transition-all duration-200 shadow-sm"
+                className="border-outline bg-transparent text-on-surface hover:bg-on-surface/5 text-sm lg:text-base font-medium font-sans px-8 h-12 lg:h-14 rounded-[8px] transition-all duration-200 shadow-sm"
               >
                 Start Selling
               </Button>
@@ -60,26 +59,26 @@ export default function Hero() {
           </div>
 
           {/* Trust Badges */}
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-4 pt-6 border-t border-[#bec9c2]/30">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-4 pt-6 border-t border-outline-variant/30">
             {/* Badge 1 */}
             <div className="flex items-center gap-2 font-sans">
-              <ShieldCheck className="w-5 h-5 text-[#00543c]" />
+              <ShieldCheck className="w-5 h-5 text-primary" />
               <div>
-                <p className="text-sm font-bold text-[#181d1a] leading-none">
+                <p className="text-sm font-bold text-on-surface leading-none">
                   100% Verified
                 </p>
-                <p className="text-xs text-[#6f7a73] mt-0.5">Trusted Sellers</p>
+                <p className="text-xs text-outline mt-0.5">Trusted Sellers</p>
               </div>
             </div>
 
             {/* Badge 2 */}
             <div className="flex items-center gap-2 font-sans">
-              <CircleArrowRightFill className="w-5 h-5 text-[#00543c]" />
+              <CircleArrowRightFill className="w-5 h-5 text-primary" />
               <div>
-                <p className="text-sm font-bold text-[#181d1a] leading-none">
+                <p className="text-sm font-bold text-on-surface leading-none">
                   Eco-Friendly
                 </p>
-                <p className="text-xs text-[#6f7a73] mt-0.5">
+                <p className="text-xs text-outline mt-0.5">
                   Sustainable Loop
                 </p>
               </div>
@@ -87,12 +86,12 @@ export default function Hero() {
 
             {/* Badge 3 */}
             <div className="flex items-center gap-2 font-sans">
-              <ThunderboltFill className="w-5 h-5 text-[#00543c]" />
+              <ThunderboltFill className="w-5 h-5 text-primary" />
               <div>
-                <p className="text-sm font-bold text-[#181d1a] leading-none">
+                <p className="text-sm font-bold text-on-surface leading-none">
                   Fast Payouts
                 </p>
-                <p className="text-xs text-[#6f7a73] mt-0.5">
+                <p className="text-xs text-outline mt-0.5">
                   Secure Transfers
                 </p>
               </div>
@@ -100,9 +99,9 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* RIGHT: ANIMATED PRODUCT COLLAGE (Haxagonal/Square mix layout matching image_3466ba.png) */}
+        {/* RIGHT: ANIMATED PRODUCT COLLAGE */}
         <div className="md:col-span-6 lg:col-span-5 relative w-full h-[450px] sm:h-[520px] md:h-[500px] lg:h-[580px] xl:h-[620px] mt-8 md:mt-0 flex items-center justify-center">
-          {/* Back Card: Camera Image (Right-aligned, straight/slight rotation) */}
+          {/* Back Card: Camera Image */}
           <motion.div
             initial={{ opacity: 0, x: 50, y: -20 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
@@ -117,7 +116,7 @@ export default function Hero() {
             />
           </motion.div>
 
-          {/* Front Card: Chair Image (Tilted forward matching image_3466ba.png) */}
+          {/* Front Card: Chair Image */}
           <motion.div
             initial={{ opacity: 0, x: -50, y: 40, rotate: -8 }}
             animate={{ opacity: 1, x: 0, y: 0, rotate: -5 }}
@@ -133,13 +132,13 @@ export default function Hero() {
             />
           </motion.div>
 
-          {/* Floating Tag Icon overlapping the chair border */}
+          {/* Floating Tag Icon */}
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-            className="absolute top-[38%] left-[16%] md:left-[8%] w-14 h-14 lg:w-16 lg:h-16 bg-[#F2A93B] rounded-full z-30 flex items-center justify-center shadow-lg border-4 border-white"
+            className="absolute top-[38%] left-[16%] md:left-[8%] w-14 h-14 lg:w-16 lg:h-16 bg-secondary-container text-on-secondary-container rounded-full z-30 flex items-center justify-center shadow-lg border-4 border-white"
           >
-            <TagDollar className="text-white w-6 h-6 lg:w-7 lg:h-7" />
+            <TagDollar className="w-6 h-6 lg:w-7 lg:h-7" />
           </motion.div>
         </div>
       </div>

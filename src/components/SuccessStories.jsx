@@ -1,4 +1,3 @@
-/** @format */
 "use client";
 
 import React from "react";
@@ -8,7 +7,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar, faQuoteLeft } from "@fortawesome/free-solid-svg-icons";
 
 export default function SuccessStories({ stories = [] }) {
-
   const displayStories =
     stories.length > 0
       ? stories
@@ -46,29 +44,19 @@ export default function SuccessStories({ stories = [] }) {
         ];
 
   return (
-    <section className="bg-[#f7faf6] py-20 px-4 sm:px-6 lg:px-12 border-t border-[#bec9c2]/20">
+    <section className="bg-surface py-20 px-4 sm:px-6 lg:px-12 border-t border-outline-variant/20">
       <div className="max-w-7xl mx-auto">
         {/* SECTION HEADER */}
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
-          <span
-            className="inline-block px-3 py-1 bg-[#00543c]/10 text-[#00543c] rounded-full text-xs font-semibold uppercase tracking-wider"
-            style={{ fontFamily: "Inter" }}
-          >
+          <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-semibold uppercase tracking-wider font-sans">
             Community Voices
           </span>
-          <h2
-            className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#181d1a]"
-            style={{ fontFamily: "Plus Jakarta Sans" }}
-          >
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-on-surface font-display">
             Trust Made Visible Through <br />
-            <span className="text-[#00543c]">Our Success Stories</span>
+            <span className="text-primary">Our Success Stories</span>
           </h2>
-          <p
-            className="text-sm sm:text-base text-[#3f4943]"
-            style={{ fontFamily: "Inter" }}
-          >
-            Hear from the buyers and sellers who are reshaping the future of
-            resale.
+          <p className="text-sm sm:text-base text-on-surface-variant font-sans">
+            Hear from the buyers and sellers who are reshaping the future of resale.
           </p>
         </div>
 
@@ -82,10 +70,10 @@ export default function SuccessStories({ stories = [] }) {
                 boxShadow: "0 16px 32px -12px rgba(0,0,0,0.06)",
               }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white rounded-2xl p-6 lg:p-8 border border-[#bec9c2]/30 flex flex-col justify-between h-full shadow-[0_4px_16px_rgba(0,0,0,0.01)] relative overflow-hidden group"
+              className="bg-white rounded-2xl p-6 lg:p-8 border border-outline-variant/30 flex flex-col justify-between h-full shadow-[0_4px_16px_rgba(0,0,0,0.01)] relative overflow-hidden group"
             >
               {/* Quote Icon Overlay */}
-              <div className="absolute top-4 right-6 text-[#00543c]/5 group-hover:text-[#00543c]/10 transition-colors duration-300">
+              <div className="absolute top-4 right-6 text-primary/5 group-hover:text-primary/10 transition-colors duration-300">
                 <FontAwesomeIcon
                   icon={faQuoteLeft}
                   className="text-5xl lg:text-6xl"
@@ -99,38 +87,29 @@ export default function SuccessStories({ stories = [] }) {
                     <FontAwesomeIcon
                       key={i}
                       icon={faStar}
-                      className="w-3.5 h-3.5 text-[#F2A93B]"
+                      className="w-3.5 h-3.5 text-secondary-container"
                     />
                   ))}
                 </div>
 
                 {/* Comment */}
-                <p
-                  className="text-sm sm:text-base text-[#3f4943] italic leading-relaxed"
-                  style={{ fontFamily: "Inter" }}
-                >
+                <p className="text-sm sm:text-base text-on-surface-variant italic leading-relaxed font-sans">
                   "{story.comment}"
                 </p>
               </div>
 
               {/* USER PROFILE INFO FOOTER */}
-              <div className="flex items-center justify-between pt-6 mt-6 border-t border-[#bec9c2]/20 z-10">
+              <div className="flex items-center justify-between pt-6 mt-6 border-t border-outline-variant/20 z-10">
                 <div className="flex items-center gap-3">
                   <Avatar
                     src={story.avatar}
-                    className="w-10 h-10 border border-[#bec9c2]/40 bg-[#f1f5f0]"
+                    className="w-10 h-10 border border-outline-variant/40 bg-surface-container-low"
                   />
                   <div>
-                    <h4
-                      className="text-sm font-bold text-[#181d1a]"
-                      style={{ fontFamily: "Inter" }}
-                    >
+                    <h4 className="text-sm font-bold text-on-surface font-sans">
                       {story.name}
                     </h4>
-                    <p
-                      className="text-xs text-[#00543c] font-medium"
-                      style={{ fontFamily: "Inter" }}
-                    >
+                    <p className="text-xs text-primary font-medium font-sans">
                       {story.role}
                     </p>
                   </div>
@@ -138,7 +117,7 @@ export default function SuccessStories({ stories = [] }) {
 
                 {/* Traded Product Tag */}
                 {story.itemTraded && (
-                  <span className="text-[10px] font-semibold bg-[#f1f5f0] text-[#3f4943] px-2.5 py-1 rounded-md max-w-[120px] truncate">
+                  <span className="text-[10px] font-semibold bg-surface-container-low text-on-surface-variant px-2.5 py-1 rounded-md max-w-[120px] truncate font-sans">
                     {story.itemTraded}
                   </span>
                 )}

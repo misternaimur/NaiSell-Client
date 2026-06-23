@@ -1,10 +1,8 @@
-/** @format */
 "use client";
 
 import React from "react";
 import { motion } from "motion/react";
 import { Button, Avatar } from "@heroui/react";
-// Font Awesome Icons Import
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
@@ -12,25 +10,23 @@ import {
   faStar,
   faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
-import { faHeart } from "@fortawesome/free-regular-svg-icons"; // Outline heart এর জন্য
+import { faHeart } from "@fortawesome/free-regular-svg-icons";
 
-// কন্ডিশন অনুযায়ী ব্যাজের ব্যাকগ্রাউন্ড কালার ডাইনামিক করার ফাংশন
 const getConditionStyle = (condition) => {
   switch (condition?.toLowerCase()) {
     case "pristine":
-      return "bg-[#00543c] text-white";
+      return "bg-primary/10 text-primary";
     case "like new":
-      return "bg-[#e0e3df] text-[#181d1a]";
+      return "bg-surface-container-highest text-on-surface";
     case "refurbished":
-      return "bg-[#ffddb5] text-[#633f00]";
+      return "bg-secondary-fixed text-on-secondary-fixed-variant";
     case "good":
     default:
-      return "bg-[#ebefea] text-[#3f4943]";
+      return "bg-surface-container text-on-surface-variant";
   }
 };
 
 export default function CuratedArrivals({ products = [] }) {
-  // Fallback ডামি ডেটা (যদি MongoDB থেকে ডেটা ফিমেল বা খালি থাকে)
   const displayProducts =
     products.length > 0
       ? products
@@ -85,10 +81,7 @@ export default function CuratedArrivals({ products = [] }) {
     <section className="py-16 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
       {/* SECTION HEADER */}
       <div className="flex justify-between items-center mb-10">
-        <h2
-          className="text-2xl sm:text-3xl font-bold tracking-tight text-[#181d1a]"
-          style={{ fontFamily: "Plus Jakarta Sans" }}
-        >
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface font-display">
           Curated Arrivals
         </h2>
 
@@ -97,21 +90,21 @@ export default function CuratedArrivals({ products = [] }) {
           <Button
             isIconOnly
             variant="bordered"
-            className="rounded-full border-[#bec9c2] hover:bg-[#ebefea] min-w-10 w-10 h-10"
+            className="rounded-full border-outline-variant hover:bg-surface-container min-w-10 w-10 h-10"
           >
             <FontAwesomeIcon
               icon={faChevronLeft}
-              className="w-3.5 h-3.5 text-[#181d1a]"
+              className="w-3.5 h-3.5 text-on-surface"
             />
           </Button>
           <Button
             isIconOnly
             variant="bordered"
-            className="rounded-full border-[#bec9c2] hover:bg-[#ebefea] min-w-10 w-10 h-10"
+            className="rounded-full border-outline-variant hover:bg-surface-container min-w-10 w-10 h-10"
           >
             <FontAwesomeIcon
               icon={faChevronRight}
-              className="w-3.5 h-3.5 text-[#181d1a]"
+              className="w-3.5 h-3.5 text-on-surface"
             />
           </Button>
         </div>
@@ -127,10 +120,10 @@ export default function CuratedArrivals({ products = [] }) {
               boxShadow: "0 12px 30px -10px rgba(0,0,0,0.08)",
             }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="group bg-white rounded-2xl overflow-hidden border border-[#bec9c2]/30 flex flex-col h-full shadow-[0_4px_16px_rgba(0,0,0,0.02)]"
+            className="group bg-white rounded-2xl overflow-hidden border border-outline-variant/30 flex flex-col h-full shadow-[0_4px_16px_rgba(0,0,0,0.02)]"
           >
             {/* IMAGE CONTAINER */}
-            <div className="relative aspect-[4/3] w-full bg-[#f1f5f0] overflow-hidden">
+            <div className="relative aspect-[4/3] w-full bg-surface-container-low overflow-hidden">
               <img
                 src={
                   product.images && product.images[0]
@@ -140,6 +133,7 @@ export default function CuratedArrivals({ products = [] }) {
                 alt={product.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
+              <div className="absolute inset-0 border border-black/5 pointer-events-none rounded-t-2xl" />
 
               {/* Condition Badge */}
               <span
@@ -152,7 +146,7 @@ export default function CuratedArrivals({ products = [] }) {
               <Button
                 isIconOnly
                 radius="full"
-                className="absolute top-3 right-3 bg-white/70 backdrop-blur-md hover:bg-white text-[#3f4943] hover:text-red-500 min-w-9 w-9 h-9 shadow-sm border border-white/40 transition-colors"
+                className="absolute top-3 right-3 bg-white/70 backdrop-blur-md hover:bg-white text-on-surface-variant hover:text-error min-w-9 w-9 h-9 shadow-sm border border-white/40 transition-colors"
               >
                 <FontAwesomeIcon icon={faHeart} className="w-4 h-4" />
               </Button>
@@ -162,54 +156,45 @@ export default function CuratedArrivals({ products = [] }) {
             <div className="p-5 flex flex-col flex-grow justify-between space-y-4">
               <div className="space-y-1">
                 {/* Title */}
-                <h3
-                  className="text-sm sm:text-base font-bold text-[#181d1a] line-clamp-1 group-hover:text-[#00543c] transition-colors duration-200"
-                  style={{ fontFamily: "Inter" }}
-                >
+                <h3 className="text-sm sm:text-base font-bold text-on-surface line-clamp-1 group-hover:text-primary transition-colors duration-200 font-sans">
                   {product.title}
                 </h3>
                 {/* Category */}
-                <p
-                  className="text-xs text-[#3f4943]"
-                  style={{ fontFamily: "Inter" }}
-                >
+                <p className="text-xs text-on-surface-variant font-sans">
                   {product.category}
                 </p>
               </div>
 
               {/* Price & Rating Row */}
               <div className="flex justify-between items-center pt-1">
-                <span className="text-lg font-bold text-[#00543c]">
+                <span className="text-lg font-bold text-primary">
                   ৳{product.price?.toLocaleString("en-IN") || product.price}
                 </span>
 
-                {/* Rating Box (As per image_0b01b2.png) */}
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-[#f1f5f0] rounded-md">
+                {/* Rating Box */}
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-surface-container-low rounded-md">
                   <FontAwesomeIcon
                     icon={faStar}
-                    className="w-3 h-3 text-[#F2A93B]"
+                    className="w-3 h-3 text-secondary-container"
                   />
-                  <span className="text-xs font-bold text-[#181d1a]">4.8</span>
+                  <span className="text-xs font-bold text-on-surface">4.8</span>
                 </div>
               </div>
 
               {/* SELLER PROFILES FOOTER */}
-              <div className="flex items-center gap-2 pt-3 border-t border-[#bec9c2]/20">
+              <div className="flex items-center gap-2 pt-3 border-t border-outline-variant/20">
                 <Avatar
                   size="sm"
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${product.sellerInfo?.name || "Seller"}`}
-                  className="w-7 h-7 bg-[#d7dbd7]"
+                  className="w-7 h-7 bg-surface-dim"
                 />
                 <div className="flex items-center gap-1">
-                  <span
-                    className="text-xs font-semibold text-[#181d1a]"
-                    style={{ fontFamily: "Inter" }}
-                  >
+                  <span className="text-xs font-semibold text-on-surface font-sans">
                     {product.sellerInfo?.name || "Unknown Seller"}
                   </span>
                   <FontAwesomeIcon
                     icon={faCheckCircle}
-                    className="w-3.5 h-3.5 text-[#00543c]"
+                    className="w-3.5 h-3.5 text-primary"
                   />
                 </div>
               </div>
