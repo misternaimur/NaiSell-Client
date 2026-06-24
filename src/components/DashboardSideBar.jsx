@@ -143,11 +143,10 @@ const DashboardSideBar = () => {
     },
   ];
 
-  const role = session?.user?.role?.toLowerCase() || "buyer"; // ডিফল্টভাবে "seller" ধরুন যদি রোল না থাকে
+  const role = session?.user?.role?.toLowerCase() || "seller"; // ডিফল্টভাবে "seller" ধরুন যদি রোল না থাকে
   const menuItems =
     role === "seller" ? sellerMenu : role === "admin" ? adminMenu : buyerMenu;
 
-  // ডাইনামিক রোল থিম (অ্যাক্টিভ লিংকের ব্যাকগ্রাউন্ড এবং বর্ডার কালার সেট করার জন্য)
   const activeTheme =
     role === "admin"
       ? "text-white bg-gradient-to-r from-amber-500/20 to-orange-500/10 border-amber-500/20"
