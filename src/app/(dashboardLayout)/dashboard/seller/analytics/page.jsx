@@ -178,7 +178,7 @@ const SalesAnalyticsPage = () => {
                     {/* Dynamic Bar */}
                     <div
                       style={{ height: barHeight }}
-                      className="w-full bg-gradient-to-t from-cyan-600/40 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 rounded-t-lg transition-all duration-500 cursor-pointer shadow-lg shadow-cyan-500/5 group-hover:shadow-cyan-400/20"
+                      className="w-full bg-linear-to-t from-cyan-600/40 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 rounded-t-lg transition-all duration-500 cursor-pointer shadow-lg shadow-cyan-500/5 group-hover:shadow-cyan-400/20"
                     />
                     <span className="text-xs text-slate-400 mt-2 font-medium">
                       {data.month}
@@ -214,7 +214,7 @@ const SalesAnalyticsPage = () => {
                   className="space-y-2"
                 >
                   <div className="flex justify-between items-center text-xs">
-                    <span className="font-medium text-slate-300 truncate max-w-[180px]">
+                    <span className="font-medium text-slate-300 truncate max-w-45">
                       {product.title}
                     </span>
                     <span className="font-mono text-slate-400 font-semibold">
@@ -225,7 +225,7 @@ const SalesAnalyticsPage = () => {
                   <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                     <div
                       style={{ width: `${product.percentage ?? 0}%` }}
-                      className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-full transition-all duration-500"
+                      className="h-full bg-linear-to-r from-cyan-500 to-indigo-500 rounded-full transition-all duration-500"
                     />
                   </div>
 
