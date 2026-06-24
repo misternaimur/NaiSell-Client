@@ -17,6 +17,7 @@ export const addProduct = async (productData) => {
 
 // ৩. সেলারের নিজের সব প্রোডাক্ট লিস্ট দেখা (ফিল্টার ও সার্চ সহ)
 export const getSellerProducts = async (queryParams = {}) => {
+  // queryParams অবজেক্টে { email, search, category, condition } থাকবে
   const searchParams = new URLSearchParams(queryParams).toString();
   return await serverFetch(`api/products?${searchParams}`);
 };

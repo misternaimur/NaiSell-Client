@@ -15,6 +15,7 @@ import {
 
 const AddProductPage = () => {
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false); // 🌟 Success border effect handle করার জন্য স্টেট
   const [imageMethod, setImageMethod] = useState("upload"); // 'upload' | 'url'
 
   const [formData, setFormData] = useState({
@@ -79,7 +80,9 @@ const AddProductPage = () => {
       const data = await addProduct(productSubmitData);
 
       if (data.success || data._id) {
-        alert("🎉 Product listed successfully on NaiSell!");
+        // ⚡ সাকসেস ইফেক্ট অ্যাক্টিভেট করা হচ্ছে
+        setIsSuccess(true);
+
         setFormData({
           title: "",
           description: "",
@@ -89,6 +92,11 @@ const AddProductPage = () => {
           stock: "",
           image: "",
         });
+
+        // ⏱️ ৩ সেকেন্ড পর সাকসেস গ্লোয়িং বর্ডার ইফেক্ট বন্ধ হবে
+        setTimeout(() => {
+          setIsSuccess(false);
+        }, 3000);
       } else {
         alert(`❌ Failed to add product: ${data.message || "Unknown error"}`);
       }
@@ -108,7 +116,14 @@ const AddProductPage = () => {
       />
 
       <form onSubmit={handleSubmit}>
-        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl space-y-6">
+        {/* 🌟 dynamic className-এ 'isSuccess' ট্রু হলে রিং, শ্যাডো এবং স্কেল ইফেক্ট অ্যাড করা হয়েছে */}
+        <div
+          className={`bg-slate-900/40 backdrop-blur-md p-6 sm:p-8 rounded-2xl space-y-6 transition-all duration-700 ease-out border ${
+            isSuccess
+              ? "border-emerald-500 ring-4 ring-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.25)] scale-[1.01]"
+              : "border-slate-800 shadow-2xl"
+          }`}
+        >
           {/* 🔘 Image selection controller */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
@@ -165,13 +180,12 @@ const AddProductPage = () => {
 
                 {formData.image && formData.image.startsWith("data:image") ? (
                   <div className="flex flex-col items-center gap-3">
-                    {/* 🛠️ Fixed LCP with Next image component */}
                     <Image
                       src={formData.image}
                       alt="Product Preview"
                       width={96}
                       height={96}
-                      unoptimized // Base64 data strings skip optimize step runtime errors
+                      unoptimized
                       className="w-24 h-24 object-cover rounded-xl border border-slate-700 shadow-xl"
                     />
                     <span className="text-xs text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20">
@@ -219,7 +233,7 @@ const AddProductPage = () => {
                       src={formData.image}
                       alt="URL Preview"
                       fill
-                      unoptimized // Next.js dynamic URLs standard verification handle
+                      unoptimized
                       className="object-cover"
                     />
                   </div>

@@ -1,7 +1,6 @@
 /** @format */
 
 import DashboardHeading from "@/components/DashboardHeading";
-import { Card, Avatar, Chip, Button } from "@heroui/react";
 import {
   FaShoppingBag,
   FaHeart,
@@ -11,13 +10,11 @@ import {
 } from "react-icons/fa";
 
 const BuyerOverviewPage = async () => {
-
   const buyerStats = {
-    totalOrders: 14, 
-    wishlistCount: 8, 
+    totalOrders: 14,
+    wishlistCount: 8,
   };
 
- 
   const recentPurchases = [
     {
       id: "p1",
@@ -47,13 +44,10 @@ const BuyerOverviewPage = async () => {
         description="Track your recent purchases, manage your orders, and view your saved items."
       />
 
-      {/* 📊 বায়ার স্ট্যাটস কার্ড গ্রিড (২টি কার্ড) */}
+      {/* 📊 বায়ার স্ট্যাটস কার্ড গ্রিড (২টি কার্ড) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Total Orders */}
-        <Card
-          className="bg-slate-900/30 backdrop-blur-md border border-slate-800 shadow-xl"
-          radius="xl"
-        >
+        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800 shadow-xl rounded-2xl">
           <div className="p-6 flex flex-row items-center justify-between">
             <div className="space-y-1">
               <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
@@ -67,13 +61,10 @@ const BuyerOverviewPage = async () => {
               <FaShoppingBag size={22} />
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Wishlist Count */}
-        <Card
-          className="bg-slate-900/30 backdrop-blur-md border border-slate-800 shadow-xl"
-          radius="xl"
-        >
+        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800 shadow-xl rounded-2xl">
           <div className="p-6 flex flex-row items-center justify-between">
             <div className="space-y-1">
               <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
@@ -87,7 +78,7 @@ const BuyerOverviewPage = async () => {
               <FaHeart size={22} />
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* 📦 Recent Purchases সেকশন */}
@@ -104,18 +95,17 @@ const BuyerOverviewPage = async () => {
         {/* পারচেজ লিস্ট কন্টেইনার */}
         <div className="space-y-4">
           {recentPurchases.map((item) => (
-            <Card
+            <div
               key={item.id}
-              className="bg-slate-900/20 backdrop-blur-md border border-slate-800/80 hover:border-slate-700/80 transition-all duration-300 shadow-lg"
-              radius="xl"
+              className="bg-slate-900/20 backdrop-blur-md border border-slate-800/80 hover:border-slate-700/80 transition-all duration-300 shadow-lg rounded-2xl"
             >
               <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 {/* প্রোডাক্ট ইনফো */}
                 <div className="flex items-center gap-4">
-                  <Avatar
-                    radius="xl"
+                  <img
                     src={item.image}
-                    className="w-16 h-16 border border-slate-700 object-cover"
+                    alt={item.productName}
+                    className="w-16 h-16 rounded-2xl border border-slate-700 object-cover"
                   />
                   <div className="space-y-1">
                     <h4 className="text-sm font-bold text-slate-100 max-w-md line-clamp-1">
@@ -132,30 +122,25 @@ const BuyerOverviewPage = async () => {
 
                 {/* স্ট্যাটাস ও অ্যাকশন বাটন */}
                 <div className="flex items-center justify-between sm:justify-end gap-4 border-t border-slate-800/60 sm:border-none pt-3 sm:pt-0">
-                  <Chip
-                    className="capitalize border-none text-xs font-bold"
-                    color={item.status === "Delivered" ? "success" : "primary"}
-                    size="sm"
-                    variant="flat"
-                    startContent={
-                      item.status === "Delivered" ? (
-                        <FaCheckCircle size={12} className="ml-1" />
-                      ) : null
-                    }
+                  {/* Custom Raw Chip */}
+                  <span
+                    className={`capitalize text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
+                      item.status === "Delivered"
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : "bg-blue-500/10 text-blue-400"
+                    }`}
                   >
+                    {item.status === "Delivered" && <FaCheckCircle size={12} />}
                     {item.status}
-                  </Chip>
+                  </span>
 
-                  <Button
-                    size="sm"
-                    variant="bordered"
-                    className="border-slate-700 hover:bg-slate-800 text-slate-300 font-medium text-xs rounded-xl"
-                  >
+                  {/* Custom Raw Button */}
+                  <button className="border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium text-xs px-3 py-1.5 rounded-xl transition-colors duration-200">
                     Track Order
-                  </Button>
+                  </button>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       </div>
