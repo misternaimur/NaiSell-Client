@@ -87,19 +87,19 @@ const DashboardSideBar = () => {
       key: "add-product",
       label: "Add Product",
       icon: FaPlusSquare,
-      href: "/dashboard/seller/add-product",
+      href: "/dashboard/seller/addproducts",
     },
     {
       key: "my-products",
       label: "My Products",
       icon: FaBoxes,
-      href: "/dashboard/seller/my-products",
+      href: "/dashboard/seller/myproducts",
     },
     {
       key: "manage-orders",
       label: "Manage Orders",
       icon: FaClipboardList,
-      href: "/dashboard/seller/manage-orders",
+      href: "/dashboard/seller/manageorders",
     },
     {
       key: "analytics",
@@ -143,7 +143,7 @@ const DashboardSideBar = () => {
     },
   ];
 
-  const role = session?.user?.role?.toLowerCase() || "buyer";
+  const role = session?.user?.role?.toLowerCase() || "buyer"; // ডিফল্টভাবে "seller" ধরুন যদি রোল না থাকে
   const menuItems =
     role === "seller" ? sellerMenu : role === "admin" ? adminMenu : buyerMenu;
 

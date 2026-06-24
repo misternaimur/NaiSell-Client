@@ -11,13 +11,13 @@ import {
 } from "react-icons/fa";
 
 const BuyerOverviewPage = async () => {
-  // 🛍️ NaiSell বায়ার ডামি ডাটা
+
   const buyerStats = {
-    totalOrders: 14, // মোট অর্ডার সংখ্যা
-    wishlistCount: 8, // উইশলিস্টে থাকা প্রোডাক্ট সংখ্যা
+    totalOrders: 14, 
+    wishlistCount: 8, 
   };
 
-  // 📦 সাম্প্রতিক কেনাকাটার ডাটা (Recent Purchases)
+ 
   const recentPurchases = [
     {
       id: "p1",
