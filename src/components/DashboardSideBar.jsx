@@ -143,11 +143,11 @@ const DashboardSideBar = () => {
   ];
 
   // Better-Auth এর অতিরিক্ত ফিল্ড 'role' থেকে ডাইনামিকালি রোল রিড করা হচ্ছে
-  const role = session?.user?.role?.toLowerCase() || "buyer";
+  const role = isPending ? null : session?.user?.role?.toLowerCase() || "buyer";
 
   // রোল অনুযায়ী মেনু ফিল্টার
   const menuItems =
-    role === "admin" ? adminMenu : role === "seller" ? sellerMenu : buyerMenu;
+    role === "admin" ? adminMenu : role === "seller" ? sellerMenu : role === "buyer" ? buyerMenu : [];
 
   // ব্যাকগ্রাউন্ড থিম (আগের মতই রাখা হয়েছে)
   const activeTheme =

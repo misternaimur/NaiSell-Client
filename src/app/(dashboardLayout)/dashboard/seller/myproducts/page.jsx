@@ -23,6 +23,15 @@ const MyProductsPage = () => {
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
 
+  // Pagination State
+  const ITEMS_PER_PAGE = 8;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
+  const paginatedProducts = products.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
   // Edit Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -68,7 +77,12 @@ const MyProductsPage = () => {
     }
   }, [sellerEmail, search, category, condition]);
 
-  // সার্চ বা ফিল্টার চেঞ্জ হওয়া মাত্রই সরাসরি ডাটাবেজ রি-কোয়েরি হবে
+  // Reset to page 1 whenever filters/search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category, condition]);
+
+  // Fetch products from DB on filter change
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -241,7 +255,7 @@ const MyProductsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
-              {products.map((product) => (
+              {paginatedProducts.map((product) => (
                 <tr
                   key={product._id}
                   className="hover:bg-slate-800/30 transition-colors"
@@ -300,6 +314,82 @@ const MyProductsPage = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination Bar */}
+      {!loading && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          {/* Showing X–Y of Z */}
+          <p className="text-xs text-slate-500 font-medium">
+            Showing{" "}
+            <span className="text-slate-300 font-bold">
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+              {Math.min(currentPage * ITEMS_PER_PAGE, products.length)}
+            </span>{" "}
+            of{" "}
+            <span className="text-slate-300 font-bold">{products.length}</span>{" "}
+            products
+          </p>
+
+          {/* Page Buttons */}
+          <div className="flex items-center gap-1.5">
+            {/* Prev */}
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-bold"
+            >
+              ‹
+            </button>
+
+            {/* Page numbers with ellipsis */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(
+                (page) =>
+                  page === 1 ||
+                  page === totalPages ||
+                  Math.abs(page - currentPage) <= 1,
+              )
+              .reduce((acc, page, idx, arr) => {
+                if (idx > 0 && page - arr[idx - 1] > 1) {
+                  acc.push("...");
+                }
+                acc.push(page);
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === "..." ? (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="h-9 w-9 flex items-center justify-center text-slate-600 text-xs select-none"
+                  >
+                    ···
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setCurrentPage(item)}
+                    className={`h-9 w-9 flex items-center justify-center rounded-xl border text-xs font-bold transition-all ${
+                      currentPage === item
+                        ? "bg-cyan-500 border-cyan-500 text-white shadow-lg shadow-cyan-500/20"
+                        : "border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ),
+              )}
+
+            {/* Next */}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-bold"
+            >
+              ›
+            </button>
+          </div>
         </div>
       )}
 
