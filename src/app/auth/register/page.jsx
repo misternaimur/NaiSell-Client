@@ -63,7 +63,7 @@ export default function RegisterForm() {
         console.log("Signup Error:", signupError.message);
       } else {
         toast.update(toastId, {
-          render: "Registration Successful! Welcome to Loom & Ledger.",
+          render: "Registration Successful! Welcome to NaiSell Hub.",
           type: "success",
           isLoading: false,
           autoClose: 3000,
@@ -85,16 +85,16 @@ export default function RegisterForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12 font-sans">
       <Card className="w-full max-w-md rounded-2xl border border-outline-variant bg-white p-8 shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
-        <Card.Header className="flex flex-col items-center gap-1.5 pb-6 text-center">
+        <div className="flex flex-col items-center gap-1.5 pb-6 text-center">
           <h1 className="font-display text-2xl font-bold tracking-tight text-on-surface">
             Create an Account
           </h1>
           <p className="text-sm text-on-surface-variant font-sans">
-            Join Loom & Ledger curated marketplace
+            Join NaiSell Hub curated marketplace
           </p>
-        </Card.Header>
+        </div>
 
-        <Card.Content>
+        <div>
           <Form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
@@ -309,7 +309,7 @@ export default function RegisterForm() {
               Sign in with Google
             </Button>
           </Form>
-        </Card.Content>
+        </div>
       </Card>
     </div>
   );

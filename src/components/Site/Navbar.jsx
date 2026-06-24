@@ -35,7 +35,7 @@ export default function Navbar() {
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
-            window.location.href = "/login";
+            window.location.href = "/auth/login";
           },
         },
       });
@@ -81,13 +81,13 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {!session && (
             <div className="hidden sm:flex items-center gap-3">
-              <Link href="/login">
+              <Link href="/auth/login">
                 <button className="inline-flex items-center justify-center font-semibold text-xs text-on-surface-variant hover:text-on-surface h-9 px-4 rounded-[8px] hover:bg-on-surface/5 transition font-sans">
                   Login
                 </button>
               </Link>
               <Link
-                href="/register"
+                href="/auth/register"
                 className="inline-flex items-center justify-center font-semibold text-xs bg-primary text-white shadow-sm hover:bg-primary/90 transition h-9 px-4 rounded-[8px] font-sans"
               >
                 Register
@@ -212,14 +212,14 @@ export default function Navbar() {
                 <div className="h-px bg-outline-variant/20 my-1" />
                 <div className="flex flex-col gap-3">
                   <Link
-                    href="/login"
+                    href="/auth/login"
                     className="font-medium text-on-surface-variant text-center text-sm transition py-2 rounded-[8px] hover:bg-on-surface/5 font-sans"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Login
                   </Link>
                   <Link
-                    href="/register"
+                    href="/auth/register"
                     className="rounded-[8px] bg-primary py-2.5 text-center text-sm text-white font-medium transition hover:bg-primary/90 font-sans"
                     onClick={() => setMobileMenuOpen(false)}
                   >

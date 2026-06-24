@@ -2,12 +2,15 @@
 
 import { serverFetch, serverMutation } from "./server";
 
-// ১. সেলারের ওভারভিউ স্ট্যাটস (Total Products, Sales, Revenue, Pending Orders)
+// =========================================================================
+// 👨‍💼 SELLER DASHBOARD & PRODUCT OPERATIONS
+// =========================================================================
+
+// ১. ⚡ ফিক্সড: সেলারের ওভারভিউ স্ট্যাটস (ব্যাকএন্ডের ডাইনামিক রুটের সাথে মেলানো হলো)
 export const getSellerStats = async (email) => {
   if (!email) return { success: false, message: "Email is required" };
-  return await serverFetch(
-    `api/seller/stats?email=${encodeURIComponent(email)}`,
-  );
+  // ব্যাকএন্ড রুট: /api/seller/stats/:email
+  return await serverFetch(`api/seller/stats/${encodeURIComponent(email)}`);
 };
 
 // ২. নতুন প্রোডাক্ট অ্যাড বা লিস্টিং করা

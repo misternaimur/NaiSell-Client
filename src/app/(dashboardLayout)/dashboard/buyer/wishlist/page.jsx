@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import DashboardHeading from "@/components/DashboardHeading";
 import { FaTrashAlt, FaEye, FaHeart, FaShoppingCart } from "react-icons/fa";
@@ -11,27 +12,29 @@ const WishlistPage = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null); // নির্দিষ্ট আইটেম ডিলিট করার ট্র্যাকিং
 
-  const buyerEmail = "buyer@naisell.com"; // আপনার অথেন্টিকেশন সেশন থেকে এটি রিপ্লেস করে নেবেন
-
-  // 📥 ডাটাবেজ থেকে উইশলিস্টের ডাটা লোড করা
-  const fetchWishlist = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `http://localhost:5000/api/wishlist?email=${buyerEmail}`,
-      );
-      const data = await res.json();
-      setWishlistItems(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching wishlist:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: session } = useSession();
+  const buyerEmail = session?.user?.email || "";
 
   useEffect(() => {
-    fetchWishlist();
-  }, []);
+    if (!buyerEmail) return;
+    let isMounted = true;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `http://localhost:5000/api/wishlist?email=${buyerEmail}`,
+        );
+        const data = await res.json();
+        if (isMounted) setWishlistItems(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching wishlist:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { isMounted = false; };
+  }, [buyerEmail]);
 
   // ❌ উইশলিস্ট থেকে প্রোডাক্ট রিমুভ করার ফাংশন
   const handleRemoveFromWishlist = async (id) => {

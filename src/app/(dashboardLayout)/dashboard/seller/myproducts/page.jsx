@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSession } from "@/lib/auth-client";
 import Image from "next/image";
 import DashboardHeading from "@/components/DashboardHeading";
 import {
@@ -12,8 +13,8 @@ import {
 import { Magnifier, TrashBin, Pencil, Hashtag, Xmark } from "@gravity-ui/icons";
 
 const MyProductsPage = () => {
-  // 📧 ড্যাশবোর্ডে লগইন থাকা সেলারের রিয়েল ইমেইল এড্রেস
-  const sellerEmail = "seller@naisell.com";
+  const { data: session } = useSession();
+  const sellerEmail = session?.user?.email || "";
 
   // Live DB States
   const [products, setProducts] = useState([]);
@@ -38,33 +39,34 @@ const MyProductsPage = () => {
   const conditions = ["Used", "Like New", "Refurbished"];
 
   // 🔄 [READ] - সরাসরি ডাটাবেজ থেকে লাইভ ডেটা ফেচ করা
+
+
   const fetchProducts = useCallback(async () => {
-    setLoading(true);
     try {
-      const queryParams = {
-        email: sellerEmail, // ব্যাকএন্ড এই ইমেইল দিয়ে ডাটাবেজ ফিল্টার করবে
+      setLoading(true);
+      // directly query live database with search, category, and condition filters
+      const res = await getSellerProducts({
+        email: sellerEmail,
         search: search.trim(),
-        category: category,
-        condition: condition,
-      };
+        category,
+        condition,
+      });
 
-      const data = await getSellerProducts(queryParams);
-
-      // ব্যাকএন্ড রেসপন্স ফরম্যাট হ্যান্ডেলিং (সরাসরি অ্যারে বা অবজেক্টের ভেতর রেজাল্ট)
-      if (data && Array.isArray(data)) {
-        setProducts(data);
-      } else if (data && Array.isArray(data.result)) {
-        setProducts(data.result);
+      if (res && Array.isArray(res)) {
+        setProducts(res);
+      } else if (res && Array.isArray(res.products)) {
+        setProducts(res.products);
+      } else if (res && Array.isArray(res.result)) {
+        setProducts(res.result);
       } else {
         setProducts([]);
       }
     } catch (error) {
-      console.error("Database fetch error:", error);
-      setProducts([]);
+      console.error("Error fetching products:", error);
     } finally {
       setLoading(false);
     }
-  }, [search, category, condition]);
+  }, [sellerEmail, search, category, condition]);
 
   // সার্চ বা ফিল্টার চেঞ্জ হওয়া মাত্রই সরাসরি ডাটাবেজ রি-কোয়েরি হবে
   useEffect(() => {

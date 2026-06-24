@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "@/lib/auth-client";
 import DashboardHeading from "@/components/DashboardHeading";
 import {
   FaCreditCard,
@@ -16,27 +17,29 @@ const PaymentHistoryPage = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const buyerEmail = "buyer@naisell.com"; // আপনার অথেন্টিকেশন সেশন থেকে এটি রিপ্লেস করে নেবেন
-
-  // 📥 ডাটাবেজ থেকে পেমেন্ট হিস্ট্রি লোড করা
-  const fetchPaymentHistory = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `http://localhost:5000/api/buyer/payments?email=${buyerEmail}`,
-      );
-      const data = await res.json();
-      setPayments(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching payment history:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: session } = useSession();
+  const buyerEmail = session?.user?.email || "";
 
   useEffect(() => {
-    fetchPaymentHistory();
-  }, []);
+    if (!buyerEmail) return;
+    let isMounted = true;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `http://localhost:5000/api/buyer/payments?email=${buyerEmail}`,
+        );
+        const data = await res.json();
+        if (isMounted) setPayments(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error fetching payment history:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { isMounted = false; };
+  }, [buyerEmail]);
 
   // 🎨 পেমেন্ট স্ট্যাটাস অনুযায়ী ডাইনামিক স্টাইল
   const getStatusStyles = (status) => {

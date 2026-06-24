@@ -1,6 +1,6 @@
 /** @format */
 
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 export const uploadImage = async (imageFile) => {
   const formData = new FormData();

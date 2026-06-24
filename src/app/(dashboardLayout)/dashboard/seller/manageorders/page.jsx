@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "@/lib/auth-client";
 import DashboardHeading from "@/components/DashboardHeading";
 import {
   getSellerIncomingOrders,
   updateOrderStatus,
-} from "@/lib/api/sellerActions"; // 🛠️ আপনার প্রোভাইড করা রিয়েল API অ্যাকশনসমূহ
+} from "@/lib/api/sellerActions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -23,36 +24,37 @@ const ManageOrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBuyer, setSelectedBuyer] = useState(null);
 
-  // 📧 ড্যাশবোর্ডে লগইন থাকা সেলারের রিয়েল ইমেইল এড্রেস
-  const sellerEmail = "seller@naisell.com";
+  const { data: session } = useSession();
+  const sellerEmail = session?.user?.email || "";
 
-  // 🔄 ১. READ - ডাটাবেজ থেকে সেলারের ইনকামিং অর্ডার লিস্ট নিয়ে আসা
-  const fetchOrdersFromDB = useCallback(async () => {
-    setLoading(true);
-    try {
-      // getSellerIncomingOrders(email) কল করা হচ্ছে
-      const data = await getSellerIncomingOrders(sellerEmail);
-
-      // ব্যাকএন্ড সরাসরি অ্যারে পাঠালে অথবা { success: true, result: [...] } ফরমেটে পাঠালে হ্যান্ডেল করার লজিক
-      if (data && Array.isArray(data)) {
-        setOrders(data);
-      } else if (data && Array.isArray(data.result)) {
-        setOrders(data.result);
-      } else {
-        setOrders([]);
-      }
-    } catch (error) {
-      console.error("Error fetching incoming orders:", error);
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [sellerEmail]);
-
-  // পেজ লোড হওয়ামাত্রই ডাটাবেজ থেকে অর্ডার লোড হবে
   useEffect(() => {
-    fetchOrdersFromDB();
-  }, [fetchOrdersFromDB]);
+    if (!sellerEmail) return;
+    let isMounted = true;
+    const load = async () => {
+      if (isMounted) setLoading(true);
+      try {
+        const data = await getSellerIncomingOrders(sellerEmail);
+        if (isMounted) {
+          if (data && Array.isArray(data)) {
+            setOrders(data);
+          } else if (data && Array.isArray(data.result)) {
+            setOrders(data.result);
+          } else if (data && data.success && Array.isArray(data.orders)) {
+            setOrders(data.orders);
+          } else {
+            setOrders([]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching incoming orders:", error);
+        if (isMounted) setOrders([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { isMounted = false; };
+  }, [sellerEmail]);
 
   // 🔄 ২. UPDATE STATUS - ডাটাবেজে অর্ডারের স্ট্যাটাস পরিবর্তন করা
   const handleStatusUpdate = async (orderId, currentStatus, action) => {
@@ -78,22 +80,20 @@ const ManageOrdersPage = () => {
           nextStatus = "Delivered";
           break;
         default:
-          return; // স্ট্যাটাস "Delivered" বা "Rejected" হলে আর পরিবর্তন হবে না
+          return;
       }
     }
 
     try {
-      // ২. updateOrderStatus(orderId, newStatus) API কল করা হচ্ছে
+      // ২. API কল করা হচ্ছে
       const res = await updateOrderStatus(orderId, nextStatus);
 
-      // serverMutation এর রেসপন্স সফল হলে UI স্টেট আপডেট করা
       if (res && (res.success || res.acknowledged || res.modifiedCount > 0)) {
         alert("🎉 Order status updated successfully in database!");
 
-        // পেজ রিফ্রেশ ছাড়া টেবিলে নতুন স্ট্যাটাস রিফ্লেক্ট করার জন্য স্টেট সিঙ্ক
+        // পেজ রিফ্রেশ ছাড়া টেবিলে নতুন স্ট্যাটাস রিফ্লেক্ট করার জন্য স্টেট সিঙ্ক
         setOrders((prev) =>
           prev.map((order) =>
-            // MongoDB `_id` এবং স্ট্যান্ডার্ড `id` হ্যান্ডেল করার লজিক
             order._id === orderId || order.id === orderId
               ? { ...order, status: nextStatus }
               : order,
@@ -159,7 +159,6 @@ const ManageOrdersPage = () => {
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {orders.map((order) => {
-                // MongoDB `_id` এবং স্ট্যান্ডার্ড `id` হ্যান্ডেল করার লজিক
                 const currentId = order._id || order.id;
                 return (
                   <tr
@@ -236,7 +235,7 @@ const ManageOrdersPage = () => {
                           onClick={() =>
                             handleStatusUpdate(currentId, order.status, "NEXT")
                           }
-                          className="text-xs bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg text-white font-medium transition-colors animate-pulse"
+                          className="text-xs bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg text-white font-medium transition-colors"
                         >
                           Start Processing
                         </button>
@@ -295,7 +294,7 @@ const ManageOrdersPage = () => {
 
       {/* Buyer Details Modal */}
       {selectedBuyer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-md bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 relative">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <h3 className="text-md font-bold text-slate-200 flex items-center gap-2">
@@ -319,7 +318,7 @@ const ManageOrdersPage = () => {
                   Full Name
                 </label>
                 <p className="text-slate-200 font-medium mt-0.5">
-                  {selectedBuyer.name}
+                  {selectedBuyer.name || "N/A"}
                 </p>
               </div>
               <div>
@@ -327,7 +326,7 @@ const ManageOrdersPage = () => {
                   Email Address
                 </label>
                 <p className="text-slate-200 mt-0.5 font-mono text-xs">
-                  {selectedBuyer.email}
+                  {selectedBuyer.email || "N/A"}
                 </p>
               </div>
               <div>
@@ -335,7 +334,7 @@ const ManageOrdersPage = () => {
                   Phone Number
                 </label>
                 <p className="text-slate-200 mt-0.5 font-mono text-xs">
-                  {selectedBuyer.phone}
+                  {selectedBuyer.phone || "N/A"}
                 </p>
               </div>
               <div>
@@ -343,7 +342,7 @@ const ManageOrdersPage = () => {
                   Delivery Address
                 </label>
                 <p className="text-slate-300 mt-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 leading-relaxed text-xs">
-                  {selectedBuyer.address}
+                  {selectedBuyer.address || "No address provided."}
                 </p>
               </div>
             </div>

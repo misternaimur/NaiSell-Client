@@ -94,7 +94,7 @@ export default function SuccessStories({ stories = [] }) {
 
                 {/* Comment */}
                 <p className="text-sm sm:text-base text-on-surface-variant italic leading-relaxed font-sans">
-                  "{story.comment}"
+                  &ldquo;{story.comment}&rdquo;
                 </p>
               </div>
 

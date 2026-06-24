@@ -19,12 +19,11 @@ import {
   FaClipboardList,
   FaChartBar,
   FaUsers,
-  FaUserShield,
   FaCheckCircle,
 } from "react-icons/fa";
 
 const DashboardSideBar = () => {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
   const pathname = usePathname();
 
   const handleLogout = async () => {
@@ -32,7 +31,7 @@ const DashboardSideBar = () => {
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
-            window.location.href = "/login";
+            window.location.href = "/auth/login";
           },
         },
       });
@@ -41,7 +40,7 @@ const DashboardSideBar = () => {
     }
   };
 
-  // 1. Buyer Menu Items
+  // ১. Buyer Menu Items
   const buyerMenu = [
     {
       key: "overview",
@@ -75,7 +74,7 @@ const DashboardSideBar = () => {
     },
   ];
 
-  // 2. Seller Menu Items
+  // ২. Seller Menu Items
   const sellerMenu = [
     {
       key: "overview",
@@ -109,7 +108,7 @@ const DashboardSideBar = () => {
     },
   ];
 
-  // 3. Admin Menu Items
+  // ৩. Admin Menu Items
   const adminMenu = [
     {
       key: "overview",
@@ -143,10 +142,14 @@ const DashboardSideBar = () => {
     },
   ];
 
-  const role = session?.user?.role?.toLowerCase() || "seller"; // ডিফল্টভাবে "seller" ধরুন যদি রোল না থাকে
-  const menuItems =
-    role === "seller" ? sellerMenu : role === "admin" ? adminMenu : buyerMenu;
+  // Better-Auth এর অতিরিক্ত ফিল্ড 'role' থেকে ডাইনামিকালি রোল রিড করা হচ্ছে
+  const role = session?.user?.role?.toLowerCase() || "buyer";
 
+  // রোল অনুযায়ী মেনু ফিল্টার
+  const menuItems =
+    role === "admin" ? adminMenu : role === "seller" ? sellerMenu : buyerMenu;
+
+  // ব্যাকগ্রাউন্ড থিম (আগের মতই রাখা হয়েছে)
   const activeTheme =
     role === "admin"
       ? "text-white bg-gradient-to-r from-amber-500/20 to-orange-500/10 border-amber-500/20"
@@ -170,6 +173,7 @@ const DashboardSideBar = () => {
         ? "bg-teal-400"
         : "bg-emerald-400";
 
+  // ব্যাজ কালার
   const roleBadgeColor =
     role === "admin"
       ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
@@ -178,7 +182,7 @@ const DashboardSideBar = () => {
         : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
 
   return (
-    <aside className="w-64 h-screen border-r border-slate-800 shrink-0">
+    <aside className="w-64 h-screen border-r border-slate-800 shrink-0 sticky top-0">
       <div className="h-full flex flex-col bg-slate-950">
         {/* Brand / Title */}
         <div className="px-6 py-5 border-b border-slate-900 flex items-center gap-2">
@@ -190,13 +194,27 @@ const DashboardSideBar = () => {
           </span>
         </div>
 
-        {/* User Profile */}
+        {/* User Profile Section */}
         <div className="px-5 py-4 border-b border-slate-900">
           <div className="flex items-center gap-3 bg-slate-900/40 p-2 rounded-xl border border-slate-900">
-            
-            <div className="overflow-hidden">
+            {session?.user?.image ? (
+              <Image
+                src={session.user.image}
+                alt="Profile"
+                width={36}
+                height={36}
+                className="rounded-lg object-cover border border-slate-800"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 text-sm font-bold border border-slate-700">
+                {session?.user?.name ? session.user.name[0].toUpperCase() : "U"}
+              </div>
+            )}
+            <div className="overflow-hidden grow">
               <p className="text-slate-200 text-sm font-bold truncate leading-tight">
-                {session?.user?.name || "Loading..."}
+                {isPending
+                  ? "Loading..."
+                  : session?.user?.name || "Anonymous User"}
               </p>
               <span
                 className={`inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border mt-1 ${roleBadgeColor}`}
@@ -207,13 +225,13 @@ const DashboardSideBar = () => {
           </div>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-grow overflow-y-auto px-3 py-4 space-y-1">
+        {/* Dynamic Navigation Menu */}
+        <nav className="grow overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-3 pb-2">
             {role} Menu
           </p>
           {menuItems?.map(({ key, label, icon: Icon, href }) => {
-            // 💡 নিখুঁত রাউটিং ম্যাচিং: ওভারভিউ-এর জন্য হুবহু ম্যাচ, বাকি সাব-রাউটের জন্য startWith চেক করবে
+            // নিখুঁত রাউটিং ম্যাচিং
             const isActive =
               href === `/dashboard/${role}`
                 ? pathname === href
@@ -226,7 +244,7 @@ const DashboardSideBar = () => {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   isActive
                     ? activeTheme
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/5 border border-transparent"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 border border-transparent"
                 }`}
               >
                 <span
@@ -236,7 +254,7 @@ const DashboardSideBar = () => {
                 >
                   <Icon size={14} />
                 </span>
-                <span className="flex-grow">{label}</span>
+                <span className="grow">{label}</span>
 
                 {isActive && (
                   <span
@@ -248,11 +266,11 @@ const DashboardSideBar = () => {
           })}
         </nav>
 
-        {/* Bottom Links */}
+        {/* Bottom Links (Home & Sign Out) */}
         <div className="px-3 py-4 border-t border-slate-900 space-y-1">
           <Link
             href="/"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-900/5 border border-transparent transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 border border-transparent transition-all duration-150"
           >
             <span className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center shrink-0 text-slate-400">
               <FaHome size={13} />
