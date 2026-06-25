@@ -39,9 +39,14 @@ export const addToWishlist = async (wishItemData) => {
 };
 
 // 🗑️ ৬. উইশলিস্ট থেকে প্রোডাক্ট রিমুভ করা
-export const removeFromWishlist = async (id) => {
+export const removeFromWishlist = async (id, email) => {
   if (!id) return { success: false, message: "Wishlist Item ID is required" };
-  return await serverMutation(`api/wishlist/${id}`, "DELETE");
+
+  const path = email
+    ? `api/wishlist/${id}?email=${encodeURIComponent(email)}`
+    : `api/wishlist/${id}`;
+
+  return await serverMutation(path, "DELETE");
 };
 
 // 💳 ৭. বায়ারের সফল পেমেন্ট হিস্ট্রি দেখা
@@ -56,7 +61,7 @@ export const getBuyerPaymentHistory = async (email) => {
 export const getBuyerProfile = async (email) => {
   if (!email) return { success: false, message: "Email is required" };
   return await serverFetch(
-    `api/users/profile?email=${encodeURIComponent(email)}`
+    `api/users/profile?email=${encodeURIComponent(email)}`,
   );
 };
 

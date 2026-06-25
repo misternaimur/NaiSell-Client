@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import DashboardHeading from "@/components/DashboardHeading";
+import { getBuyerPaymentHistory } from "@/lib/api/buyerActions";
 import {
   FaCreditCard,
   FaCalendarAlt,
@@ -26,19 +27,25 @@ const PaymentHistoryPage = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `http://localhost:5000/api/buyer/payments?email=${buyerEmail}`,
-        );
-        const data = await res.json();
-        if (isMounted) setPayments(Array.isArray(data) ? data : []);
+        const data = await getBuyerPaymentHistory(buyerEmail);
+        const paymentsData = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.result)
+            ? data.result
+            : [];
+
+        if (isMounted) setPayments(paymentsData);
       } catch (error) {
         console.error("Error fetching payment history:", error);
+        if (isMounted) setPayments([]);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
     load();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [buyerEmail]);
 
   // 🎨 পেমেন্ট স্ট্যাটাস অনুযায়ী ডাইনামিক স্টাইল

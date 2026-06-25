@@ -6,6 +6,7 @@ import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import DashboardHeading from "@/components/DashboardHeading";
 import { FaTrashAlt, FaEye, FaHeart, FaShoppingCart } from "react-icons/fa";
+import { getBuyerWishlist, removeFromWishlist } from "@/lib/api/buyerActions";
 
 const WishlistPage = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -21,11 +22,16 @@ const WishlistPage = () => {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `http://localhost:5000/api/wishlist?email=${buyerEmail}`,
-        );
-        const data = await res.json();
-        if (isMounted) setWishlistItems(Array.isArray(data) ? data : []);
+        const res = await getBuyerWishlist(buyerEmail);
+        const items = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.products)
+            ? res.products
+            : Array.isArray(res?.result)
+              ? res.result
+              : [];
+
+        if (isMounted) setWishlistItems(items);
       } catch (error) {
         console.error("Error fetching wishlist:", error);
       } finally {
@@ -33,22 +39,18 @@ const WishlistPage = () => {
       }
     };
     load();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [buyerEmail]);
 
   // ❌ উইশলিস্ট থেকে প্রোডাক্ট রিমুভ করার ফাংশন
   const handleRemoveFromWishlist = async (id) => {
     try {
       setActionLoading(id);
-      const res = await fetch(
-        `http://localhost:5000/api/wishlist/${id}?email=${buyerEmail}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const data = await res.json();
+      const data = await removeFromWishlist(id, buyerEmail);
 
-      if (data.success) {
+      if (data?.success !== false) {
         // রিয়েল-টাইমে স্টেট থেকে আইটেমটি বাদ দেওয়া
         setWishlistItems((prev) => prev.filter((item) => item._id !== id));
       } else {

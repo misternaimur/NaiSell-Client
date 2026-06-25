@@ -6,35 +6,73 @@ import { baseURL } from "./baseUrl";
 // 🌐 1. CORE API UTILITIES (Fetch & Mutation Handlers)
 // =========================================================================
 
+const buildApiUrl = (path) => {
+  const normalizedPath = path?.replace(/^\/+/, "");
+  return `${baseURL}/${normalizedPath}`;
+};
+
+const buildFallbackResponse = (path, error) => ({
+  success: false,
+  message: "Unable to connect to the server right now. Please try again later.",
+  path,
+  error: error?.message || "Unknown error",
+});
+
 /**
  * 🛠️ POST, PUT, PATCH রিকোয়েস্ট হ্যান্ডেল করার গ্লোবাল মিউটেশন ফাংশন
  */
 export const serverMutation = async (path, method, data) => {
-  const options = {
-    method: method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
+  try {
+    const options = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
 
-  // যদি ডাটা থাকে, শুধুমাত্র তখনই বডি যোগ হবে
-  if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
-    options.body = JSON.stringify(data);
+    if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
+      options.body = JSON.stringify(data);
+    }
+
+    const res = await fetch(buildApiUrl(path), options);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      return {
+        success: false,
+        message: errorText || "Request failed",
+      };
+    }
+
+    return await res.json().catch(() => ({}));
+  } catch (error) {
+    console.warn("⚠️ API request failed:", error);
+    return buildFallbackResponse(path, error);
   }
-
-  const res = await fetch(`${baseURL}/${path}`, options);
-  return res.json();
 };
 
 /**
  * 🔄 GET রিকোয়েস্টের মাধ্যমে রিয়েল-টাইম ডাটাবেজ থেকে ডাটা নিয়ে আসার ফাংশন
  */
 export const serverFetch = async (path) => {
-  // cache: "no-store" দেওয়ার কারণে প্রতিবার ডিরেক্ট ডাটাবেজ থেকে লেটেস্ট ডাটা আসবে
-  const res = await fetch(`${baseURL}/${path}`, {
-    cache: "no-store",
-  });
-  return res.json();
+  try {
+    const res = await fetch(buildApiUrl(path), {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      return {
+        success: false,
+        message: errorText || "Request failed",
+      };
+    }
+
+    return await res.json().catch(() => ({}));
+  } catch (error) {
+    console.warn("⚠️ API request failed:", error);
+    return buildFallbackResponse(path, error);
+  }
 };
 
 // =========================================================================

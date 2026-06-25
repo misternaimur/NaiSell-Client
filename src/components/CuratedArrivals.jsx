@@ -2,7 +2,8 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { Button, Avatar } from "@heroui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,6 +14,12 @@ import {
   faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
+import { useSession } from "@/lib/auth-client";
+import {
+  addToWishlist,
+  getBuyerWishlist,
+  removeFromWishlist,
+} from "@/lib/api/buyerActions";
 
 // ডার্ক থিমের সাথে সামঞ্জস্যপূর্ণ ডাইনামিক ব্যাজ স্টাইল
 const getConditionStyle = (condition) => {
@@ -30,6 +37,11 @@ const getConditionStyle = (condition) => {
 };
 
 export default function CuratedArrivals({ products = [] }) {
+  const [wishlistMap, setWishlistMap] = useState({});
+  const [wishlistLoadingId, setWishlistLoadingId] = useState(null);
+  const { data: session } = useSession();
+  const buyerEmail = session?.user?.email || "";
+
   const displayProducts =
     products.length > 0
       ? products
@@ -79,6 +91,94 @@ export default function CuratedArrivals({ products = [] }) {
             sellerInfo: { name: "James T." },
           },
         ];
+
+  useEffect(() => {
+    const loadWishlist = async () => {
+      if (!buyerEmail) {
+        setWishlistMap({});
+        return;
+      }
+
+      try {
+        const res = await getBuyerWishlist(buyerEmail);
+        const items = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.products)
+            ? res.products
+            : Array.isArray(res?.result)
+              ? res.result
+              : [];
+
+        const nextMap = {};
+        items.forEach((item) => {
+          const productId = item.productId || item.product?._id || item._id;
+          if (productId) {
+            nextMap[productId] = item._id;
+          }
+        });
+
+        setWishlistMap(nextMap);
+      } catch (error) {
+        console.error("Error loading wishlist:", error);
+      }
+    };
+
+    loadWishlist();
+  }, [buyerEmail]);
+
+  const handleToggleWishlist = async (product) => {
+    if (!buyerEmail) {
+      alert("Please sign in to save products to your wishlist.");
+      return;
+    }
+
+    const productId = product._id || product.id;
+    const existingItemId = wishlistMap[productId];
+
+    if (existingItemId) {
+      try {
+        setWishlistLoadingId(productId);
+        const res = await removeFromWishlist(existingItemId, buyerEmail);
+        if (res?.success !== false) {
+          setWishlistMap((prev) => {
+            const next = { ...prev };
+            delete next[productId];
+            return next;
+          });
+        }
+      } catch (error) {
+        console.error("Error removing product from wishlist:", error);
+      } finally {
+        setWishlistLoadingId(null);
+      }
+      return;
+    }
+
+    try {
+      setWishlistLoadingId(productId);
+      const payload = {
+        email: buyerEmail,
+        productId,
+        title: product.title,
+        image: product.images?.[0] || product.image || "",
+        price: product.price,
+        category: product.category,
+        condition: product.condition,
+        stock: product.stock ?? 1,
+      };
+
+      const res = await addToWishlist(payload);
+      if (res?.success !== false) {
+        const savedId =
+          res?.item?._id || res?._id || res?.data?._id || productId;
+        setWishlistMap((prev) => ({ ...prev, [productId]: savedId }));
+      }
+    } catch (error) {
+      console.error("Error adding product to wishlist:", error);
+    } finally {
+      setWishlistLoadingId(null);
+    }
+  };
 
   return (
     <section className="relative w-full py-24 px-4 sm:px-8 lg:px-16 overflow-hidden bg-[#080c18] border-y border-slate-900/50 shadow-2xl">
@@ -160,7 +260,13 @@ export default function CuratedArrivals({ products = [] }) {
                 <Button
                   isIconOnly
                   radius="full"
-                  className="absolute top-4 right-4 bg-slate-950/60 backdrop-blur-md hover:bg-emerald-500 text-slate-300 hover:text-white min-w-9 w-9 h-9 shadow-lg border border-slate-800/40 transition-all duration-200"
+                  onClick={() => handleToggleWishlist(product)}
+                  disabled={wishlistLoadingId === (product._id || product.id)}
+                  className={`absolute top-4 right-4 bg-slate-950/60 backdrop-blur-md min-w-9 w-9 h-9 shadow-lg border border-slate-800/40 transition-all duration-200 ${
+                    wishlistMap[product._id || product.id]
+                      ? "bg-emerald-500 text-white"
+                      : "text-slate-300 hover:bg-emerald-500 hover:text-white"
+                  }`}
                 >
                   <FontAwesomeIcon icon={faHeart} className="w-3.5 h-3.5" />
                 </Button>
@@ -185,16 +291,12 @@ export default function CuratedArrivals({ products = [] }) {
                     ৳{product.price?.toLocaleString("en-IN") || product.price}
                   </span>
 
-                  {/* Rating Box */}
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-950/60 rounded-md border border-slate-800">
-                    <FontAwesomeIcon
-                      icon={faStar}
-                      className="w-2.5 h-2.5 text-amber-400"
-                    />
-                    <span className="text-[11px] font-bold text-slate-300">
-                      4.8
-                    </span>
-                  </div>
+                  <Link
+                    href={`/products/${product._id || product.id}`}
+                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    View details
+                  </Link>
                 </div>
 
                 {/* SELLER PROFILES FOOTER */}

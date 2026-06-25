@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/** @format */
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -6,13 +9,16 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { Button, Avatar } from "@heroui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faStar,
-  faCheckCircle,
-} from "@fortawesome/free-solid-svg-icons";
+import { faStar, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import { Magnifier, Hashtag } from "@gravity-ui/icons";
 import { serverFetch } from "@/lib/api/server";
+import { useSession } from "@/lib/auth-client";
+import {
+  addToWishlist,
+  getBuyerWishlist,
+  removeFromWishlist,
+} from "@/lib/api/buyerActions";
 
 const getConditionStyle = (condition) => {
   switch (condition?.toLowerCase()) {
@@ -31,6 +37,11 @@ const getConditionStyle = (condition) => {
 export default function AllProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wishlistMap, setWishlistMap] = useState({});
+  const [wishlistLoadingId, setWishlistLoadingId] = useState(null);
+
+  const { data: session } = useSession();
+  const buyerEmail = session?.user?.email || "";
 
   // Filters
   const [search, setSearch] = useState("");
@@ -83,28 +94,118 @@ export default function AllProductsPage() {
     }
   }, [search, category, condition]);
 
-  // Reset pagination on filter change
+  // Reset pagination immediately when filter values change to avoid rendering mismatch
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, category, condition]);
+    fetchProducts();
+  }, [search, category, condition, fetchProducts]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    const loadWishlist = async () => {
+      if (!buyerEmail) {
+        setWishlistMap({});
+        return;
+      }
+
+      try {
+        const res = await getBuyerWishlist(buyerEmail);
+        const items = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.products)
+            ? res.products
+            : Array.isArray(res?.result)
+              ? res.result
+              : [];
+
+        const nextMap = {};
+        items.forEach((item) => {
+          const productId = item.productId || item.product?._id || item._id;
+          if (productId) {
+            nextMap[productId] = item._id;
+          }
+        });
+
+        setWishlistMap(nextMap);
+      } catch (error) {
+        console.error("Error loading wishlist:", error);
+      }
+    };
+
+    loadWishlist();
+  }, [buyerEmail]);
+
+  const handleToggleWishlist = async (product) => {
+    if (!buyerEmail) {
+      alert("Please sign in to save products to your wishlist.");
+      return;
+    }
+
+    const productId = product._id || product.id;
+    const existingItemId = wishlistMap[productId];
+
+    if (existingItemId) {
+      try {
+        setWishlistLoadingId(productId);
+        const res = await removeFromWishlist(existingItemId, buyerEmail);
+        if (res?.success !== false) {
+          setWishlistMap((prev) => {
+            const next = { ...prev };
+            delete next[productId];
+            return next;
+          });
+        } else {
+          alert(`❌ ${res?.message || "Unable to remove item from wishlist."}`);
+        }
+      } catch (error) {
+        console.error("Error removing product from wishlist:", error);
+      } finally {
+        setWishlistLoadingId(null);
+      }
+      return;
+    }
+
+    try {
+      setWishlistLoadingId(productId);
+      const payload = {
+        email: buyerEmail,
+        productId,
+        title: product.title,
+        image: product.images?.[0] || product.image || "",
+        price: product.price,
+        category: product.category,
+        condition: product.condition,
+        stock: product.stock ?? 1,
+      };
+
+      const res = await addToWishlist(payload);
+      if (res?.success !== false) {
+        const savedId =
+          res?.item?._id || res?._id || res?.data?._id || productId;
+        setWishlistMap((prev) => ({ ...prev, [productId]: savedId }));
+      } else {
+        alert(`❌ ${res?.message || "Unable to add item to wishlist."}`);
+      }
+    } catch (error) {
+      console.error("Error adding product to wishlist:", error);
+    } finally {
+      setWishlistLoadingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#080c18] pb-24 pt-12 text-white px-4 sm:px-8 lg:px-16 overflow-hidden relative">
       {/* Background glow */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-teal-500/5 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-125 h-125 bg-emerald-500/5 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-125 h-125 bg-teal-500/5 blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="max-w-[1400px] mx-auto relative z-10">
+      <div className="max-w-350 mx-auto relative z-10">
         <div className="mb-10 text-center">
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white font-display">
             Explore <span className="text-emerald-500">All Products</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-400 mt-3 max-w-2xl mx-auto">
-            Find the perfect deals on pre-owned and refurbished items. Use the filters below to narrow down your search.
+            Find the perfect deals on pre-owned and refurbished items. Use the
+            filters below to narrow down your search.
           </p>
         </div>
 
@@ -134,7 +235,11 @@ export default function AllProductsPage() {
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
-                <option key={cat} value={cat} className="bg-slate-900 text-white">
+                <option
+                  key={cat}
+                  value={cat}
+                  className="bg-slate-900 text-white"
+                >
                   {cat}
                 </option>
               ))}
@@ -149,7 +254,11 @@ export default function AllProductsPage() {
             >
               <option value="">All Conditions</option>
               {conditions.map((cond) => (
-                <option key={cond} value={cond} className="bg-slate-900 text-white">
+                <option
+                  key={cond}
+                  value={cond}
+                  className="bg-slate-900 text-white"
+                >
                   {cond}
                 </option>
               ))}
@@ -164,7 +273,9 @@ export default function AllProductsPage() {
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-20 bg-slate-900/20 border border-slate-800 rounded-2xl">
-            <p className="text-slate-400 text-lg">No products found matching the criteria.</p>
+            <p className="text-slate-400 text-lg">
+              No products found matching the criteria.
+            </p>
           </div>
         ) : (
           <>
@@ -180,26 +291,26 @@ export default function AllProductsPage() {
                   className="group bg-slate-900/30 backdrop-blur-md rounded-2xl overflow-hidden border border-slate-850 flex flex-col h-full transition-all duration-300 shadow-xl"
                 >
                   {/* IMAGE CONTAINER */}
-                  <div className="relative aspect-[4/3] w-full bg-slate-950 overflow-hidden">
+                  <div className="relative aspect-4/3 w-full bg-slate-950 overflow-hidden">
                     <Image
                       src={
                         product.images && product.images[0]
                           ? product.images[0]
                           : product.image
-                          ? product.image
-                          : "https://via.placeholder.com/400x300"
+                            ? product.image
+                            : "https://via.placeholder.com/400x300"
                       }
                       alt={product.title}
                       fill
                       unoptimized
                       className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-linear-to-t from-slate-950/30 via-transparent to-transparent pointer-events-none" />
 
                     {/* Condition Badge */}
                     <span
                       className={`absolute top-4 left-4 text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-lg backdrop-blur-md ${getConditionStyle(
-                        product.condition
+                        product.condition,
                       )}`}
                     >
                       {product.condition || "Available"}
@@ -209,14 +320,22 @@ export default function AllProductsPage() {
                     <Button
                       isIconOnly
                       radius="full"
-                      className="absolute top-4 right-4 bg-slate-950/60 backdrop-blur-md hover:bg-emerald-500 text-slate-300 hover:text-white min-w-9 w-9 h-9 shadow-lg border border-slate-800/40 transition-all duration-200"
+                      onClick={() => handleToggleWishlist(product)}
+                      disabled={
+                        wishlistLoadingId === (product._id || product.id)
+                      }
+                      className={`absolute top-4 right-4 bg-slate-950/60 backdrop-blur-md min-w-9 w-9 h-9 shadow-lg border border-slate-800/40 transition-all duration-200 ${
+                        wishlistMap[product._id || product.id]
+                          ? "bg-emerald-500 text-white"
+                          : "text-slate-300 hover:bg-emerald-500 hover:text-white"
+                      }`}
                     >
                       <FontAwesomeIcon icon={faHeart} className="w-3.5 h-3.5" />
                     </Button>
                   </div>
 
                   {/* PRODUCT INFO AREA */}
-                  <div className="p-5 flex flex-col flex-grow justify-between space-y-4 bg-slate-900/10">
+                  <div className="p-5 flex flex-col grow justify-between space-y-4 bg-slate-900/10">
                     <div className="space-y-1.5">
                       <h3 className="text-sm sm:text-base font-bold text-slate-200 line-clamp-1 group-hover:text-emerald-400 transition-colors duration-200 font-sans">
                         {product.title}
@@ -228,11 +347,18 @@ export default function AllProductsPage() {
 
                     <div className="flex justify-between items-center pt-1">
                       <span className="text-base sm:text-lg font-black text-emerald-400">
-                        ৳{product.price?.toLocaleString("en-IN") || product.price}
+                        ৳
+                        {product.price?.toLocaleString("en-IN") ||
+                          product.price}
                       </span>
                       <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-950/60 rounded-md border border-slate-800">
-                        <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5 text-amber-400" />
-                        <span className="text-[11px] font-bold text-slate-300">4.8</span>
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          className="w-2.5 h-2.5 text-amber-400"
+                        />
+                        <span className="text-[11px] font-bold text-slate-300">
+                          4.8
+                        </span>
                       </div>
                     </div>
 
@@ -241,15 +367,22 @@ export default function AllProductsPage() {
                       <Avatar
                         size="sm"
                         src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${
-                          product.sellerInfo?.name || product.sellerEmail || "Seller"
+                          product.sellerInfo?.name ||
+                          product.sellerEmail ||
+                          "Seller"
                         }`}
                         className="w-6 h-6 bg-slate-850 border border-slate-800"
                       />
                       <div className="flex items-center gap-1">
-                        <span className="text-xs font-bold text-slate-400 font-sans truncate max-w-[120px]">
-                          {product.sellerInfo?.name || product.sellerEmail || "Unknown Seller"}
+                        <span className="text-xs font-bold text-slate-400 font-sans truncate max-w-30">
+                          {product.sellerInfo?.name ||
+                            product.sellerEmail ||
+                            "Unknown Seller"}
                         </span>
-                        <FontAwesomeIcon icon={faCheckCircle} className="w-3 h-3 text-emerald-500" />
+                        <FontAwesomeIcon
+                          icon={faCheckCircle}
+                          className="w-3 h-3 text-emerald-500"
+                        />
                       </div>
                     </div>
                   </div>
@@ -267,7 +400,11 @@ export default function AllProductsPage() {
                     {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
                     {Math.min(currentPage * ITEMS_PER_PAGE, products.length)}
                   </span>{" "}
-                  of <span className="text-slate-300 font-bold">{products.length}</span> products
+                  of{" "}
+                  <span className="text-slate-300 font-bold">
+                    {products.length}
+                  </span>{" "}
+                  products
                 </p>
 
                 {/* Page Buttons */}
@@ -285,7 +422,7 @@ export default function AllProductsPage() {
                       (page) =>
                         page === 1 ||
                         page === totalPages ||
-                        Math.abs(page - currentPage) <= 1
+                        Math.abs(page - currentPage) <= 1,
                     )
                     .reduce((acc, page, idx, arr) => {
                       if (idx > 0 && page - arr[idx - 1] > 1) {
@@ -314,11 +451,13 @@ export default function AllProductsPage() {
                         >
                           {item}
                         </button>
-                      )
+                      ),
                     )}
 
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-bold"
                   >
