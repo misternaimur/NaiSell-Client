@@ -29,7 +29,7 @@ export async function POST(request) {
       // Update with image and role
       if (result.user) {
         await db.collection("user").updateOne(
-          { id: result.user.id },
+          { _id: result.user.id },
           { $set: { image: image || "", role: "buyer" } }
         );
         user = { id: result.user.id, email, name, image, role: "buyer" };

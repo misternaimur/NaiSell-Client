@@ -12,19 +12,25 @@ export async function POST(request) {
     // Check if user already exists
     const existingUser = await db.collection("user").findOne({ email });
     if (existingUser) {
+      if (role) {
+        await db.collection("user").updateOne(
+          { _id: existingUser._id },
+          { $set: { role } }
+        );
+      }
       await client.close();
-      return Response.json({ message: "User already exists", userId: existingUser.id });
+      return Response.json({ message: "User already exists", userId: existingUser._id });
     }
 
     // Create user through Better-Auth
     const result = await auth.api.signUpEmail({
-      body: { email, password, name },
+      body: { email, password, name, role },
     });
 
     // Update role if specified
     if (role && result.user) {
       await db.collection("user").updateOne(
-        { id: result.user.id },
+        { _id: result.user.id },
         { $set: { role } }
       );
     }

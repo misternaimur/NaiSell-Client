@@ -1,7 +1,11 @@
 /** @format */
+"use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import DashboardHeading from "@/components/DashboardHeading";
+import { useSession } from "@/lib/auth-client";
+import { getBuyerStats, getBuyerOrders } from "@/lib/api/buyerActions";
 import {
   FaShoppingBag,
   FaHeart,
@@ -10,8 +14,70 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 
-// 🎯 ডেমো ডাটা ফেলে দিয়ে props হিসেবে ডাটা রিসিভ করা হচ্ছে
-const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
+const BuyerOverviewPage = () => {
+  const { data: session, isPending } = useSession();
+  const [buyerStats, setBuyerStats] = useState({
+    totalOrders: 0,
+    wishlistCount: 0,
+  });
+  const [recentPurchases, setRecentPurchases] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const buyerEmail = session?.user?.email || "";
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchBuyerData = async () => {
+      if (!buyerEmail) return;
+      try {
+        setLoading(true);
+        const statsData = await getBuyerStats(buyerEmail);
+        const ordersData = await getBuyerOrders(buyerEmail);
+
+        if (isMounted) {
+          if (statsData) {
+            setBuyerStats({
+              totalOrders: statsData.totalOrders || 0,
+              wishlistCount: statsData.wishlistCount || 0,
+            });
+          }
+          if (Array.isArray(ordersData)) {
+            const mappedOrders = ordersData.slice(0, 5).map((order) => ({
+              _id: order._id,
+              productName: order.product?.title || "Product Purchase",
+              image: order.product?.images?.[0] || "",
+              price: order.totalAmount || 0,
+              date: order.orderDate ? new Date(order.orderDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              }) : "Recent",
+              status: order.status || "Pending",
+            }));
+            setRecentPurchases(mappedOrders);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching live buyer data:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (!isPending && buyerEmail) {
+      fetchBuyerData();
+    }
+  }, [buyerEmail, isPending]);
+
+  if (isPending || loading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <span className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 mt-6 pb-12 text-on-background">
       {/* 🎯 হেডিং সেকশন */}
@@ -63,9 +129,9 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
           <h3 className="text-lg font-bold text-on-background tracking-wide">
             Recent Purchases
           </h3>
-          <span className="text-xs text-primary font-semibold cursor-pointer hover:underline flex items-center gap-1">
+          <Link href="/dashboard/buyer/orders" className="text-xs text-primary font-semibold cursor-pointer hover:underline flex items-center gap-1">
             View Order History <FaArrowRight size={10} />
-          </span>
+          </Link>
         </div>
 
         {/* পারচেজ লিস্ট কন্টেইনার */}
@@ -113,12 +179,12 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
                   <div className="flex items-center justify-between sm:justify-end gap-4 border-t border-outline-variant/40 sm:border-none pt-3 sm:pt-0">
                     <span
                       className={`capitalize text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
-                        item.status === "Delivered"
+                        item.status === "Delivered" || item.status === "Paid"
                           ? "bg-primary/10 text-primary"
                           : "bg-secondary/10 text-secondary"
                       }`}
                     >
-                      {item.status === "Delivered" && (
+                      {(item.status === "Delivered" || item.status === "Paid") && (
                         <FaCheckCircle size={12} />
                       )}
                       {item.status || "Pending"}
