@@ -71,7 +71,10 @@ export default function AdminUsersPage() {
   }, [search, roleFilter, statusFilter]);
 
   useEffect(() => {
-    fetchUsers();
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchUsers]);
 
   const handleStatusToggle = async (userId, currentStatus) => {

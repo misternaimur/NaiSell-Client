@@ -54,7 +54,7 @@ export default function AdminAnalyticsPage() {
     : 1;
 
   return (
-    <div className="space-y-8 mt-6 pb-12 text-white max-w-6xl mx-auto px-4 sm:px-0">
+    <div className="space-y-8 mt-6 pb-12 text-on-background max-w-6xl mx-auto px-4 sm:px-0">
       <DashboardHeading
         title="Platform Analytics"
         description="Deep insights into platform growth, user acquisition, and overall category performance."
@@ -190,10 +190,10 @@ export default function AdminAnalyticsPage() {
                     </span>
                   </div>
 
-                  <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                  <div className="w-full h-2.5 bg-surface-container-high rounded-full overflow-hidden border border-outline-variant">
                     <div
                       style={{ width: `${cat.percentage ?? 0}%` }}
-                      className="h-full bg-linear-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000"
+                      className="h-full bg-linear-to-r from-primary to-primary-container rounded-full transition-all duration-1000"
                     />
                   </div>
 

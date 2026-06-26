@@ -81,7 +81,10 @@ export default function AdminProductsPage() {
   }, [search, statusFilter]);
 
   useEffect(() => {
-    fetchProducts();
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchProducts]);
 
   const handleModeration = async (productId, newStatus) => {
@@ -140,14 +143,14 @@ export default function AdminProductsPage() {
       case "rejected":
         return "bg-rose-500/10 text-rose-400 border-rose-500/20";
       case "reported":
-        return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+        return "bg-secondary/10 text-secondary border-secondary/20";
       default:
         return "bg-slate-500/10 text-slate-400 border-slate-500/20";
     }
   };
 
   return (
-    <div className="space-y-8 mt-6 pb-12 text-white max-w-6xl mx-auto px-4 sm:px-0">
+    <div className="space-y-8 mt-6 pb-12 text-on-background max-w-6xl mx-auto px-4 sm:px-0">
       <DashboardHeading
         title="Manage Products"
         description="Review, approve, or reject product listings. Monitor reported items to keep the marketplace safe."

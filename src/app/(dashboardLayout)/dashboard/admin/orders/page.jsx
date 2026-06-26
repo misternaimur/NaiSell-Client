@@ -81,7 +81,10 @@ export default function AdminOrdersPage() {
   }, [search, statusFilter]);
 
   useEffect(() => {
-    fetchOrders();
+    const timer = setTimeout(() => {
+      fetchOrders();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchOrders]);
 
   const handleStatusUpdate = async (orderId, newStatus) => {
