@@ -22,7 +22,6 @@ import {
   faUserTag,
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { authClient } from "../../../lib/auth-client";
 import { toast } from "react-toastify";
 
@@ -284,29 +283,6 @@ export default function RegisterForm() {
             >
               <FontAwesomeIcon icon={faCheck} />
               {isSubmitting ? "Registering..." : "Register"}
-            </Button>
-
-            {/* Divider */}
-            <div className="flex items-center my-1">
-              <div className="flex-1 border-t border-outline-variant"></div>
-              <span className="px-3 text-xs text-outline uppercase font-semibold tracking-wider font-sans">
-                Or
-              </span>
-              <div className="flex-1 border-t border-outline-variant"></div>
-            </div>
-
-            {/* Google Sign-In Button */}
-            <Button
-              type="button"
-              variant="bordered"
-              aria-label="Sign up with Google"
-              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium py-2.5 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all text-sm flex items-center justify-center gap-2.5 font-sans"
-            >
-              <FontAwesomeIcon
-                icon={faGoogle}
-                className="text-base text-primary"
-              />
-              Sign in with Google
             </Button>
           </Form>
         </div>

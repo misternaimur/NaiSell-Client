@@ -21,7 +21,6 @@ import {
   faEyeSlash,
   faArrowRightToBracket,
 } from "@fortawesome/free-solid-svg-icons";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { authClient } from "../../../lib/auth-client";
 import { toast } from "react-toastify";
 
@@ -91,24 +90,6 @@ export default function SigninPage() {
     }
   };
 
-  const handleGoogleSignin = async () => {
-    const toastId = toast.loading("Connecting to Google...");
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/",
-      });
-    } catch (err) {
-      console.error("Google signin error:", err);
-      toast.update(toastId, {
-        render: "Google authentication failed.",
-        type: "error",
-        isLoading: false,
-        autoClose: 3000,
-      });
-    }
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 relative overflow-hidden font-sans">
       {/* Background Subtle Brand Gradients */}
@@ -137,29 +118,6 @@ export default function SigninPage() {
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
           >
-            {/* Google Login Button */}
-            <Button
-              onClick={handleGoogleSignin}
-              type="button"
-              variant="bordered"
-              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
-            >
-              <FontAwesomeIcon
-                icon={faGoogle}
-                className="text-base text-primary"
-              />
-              Log in with Google
-            </Button>
-
-            {/* Divider */}
-            <div className="flex items-center my-1 w-full">
-              <div className="flex-1 border-t border-outline-variant/60"></div>
-              <span className="px-3 text-[11px] text-outline uppercase tracking-wider font-semibold">
-                Or credentials
-              </span>
-              <div className="flex-1 border-t border-outline-variant/60"></div>
-            </div>
-
             {/* Email Field */}
             <Controller
               name="email"

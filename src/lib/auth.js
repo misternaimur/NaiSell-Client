@@ -26,11 +26,4 @@ export const auth = betterAuth({
       },
     },
   },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID || "your-google-client-id",
-      clientSecret:
-        process.env.GOOGLE_CLIENT_SECRET || "your-google-client-secret",
-    },
-  },
 });
