@@ -1,10 +1,4 @@
-/** @format */
-
 import { baseURL } from "./baseUrl";
-
-// =========================================================================
-// 🌐 1. CORE API UTILITIES (Fetch & Mutation Handlers)
-// =========================================================================
 
 const buildApiUrl = (path) => {
   const normalizedPath = path?.replace(/^\/+/, "");
@@ -18,15 +12,24 @@ const buildFallbackResponse = (path, error) => ({
   error: error?.message || "Unknown error",
 });
 
-/**
- * 🛠️ POST, PUT, PATCH রিকোয়েস্ট হ্যান্ডেল করার গ্লোবাল মিউটেশন ফাংশন
- */
+const getAuthToken = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    const session = JSON.parse(localStorage.getItem("better-auth.session") || "{}");
+    return session?.token || null;
+  } catch {
+    return null;
+  }
+};
+
 export const serverMutation = async (path, method, data) => {
   try {
+    const token = getAuthToken();
     const options = {
       method,
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     };
 
@@ -38,78 +41,41 @@ export const serverMutation = async (path, method, data) => {
 
     if (!res.ok) {
       const errorText = await res.text();
-      return {
-        success: false,
-        message: errorText || "Request failed",
-      };
+      return { success: false, message: errorText || "Request failed" };
     }
 
     return await res.json().catch(() => ({}));
   } catch (error) {
-    console.warn("⚠️ API request failed:", error);
+    console.warn("API request failed:", error);
     return buildFallbackResponse(path, error);
   }
 };
 
-/**
- * 🔄 GET রিকোয়েস্টের মাধ্যমে রিয়েল-টাইম ডাটাবেজ থেকে ডাটা নিয়ে আসার ফাংশন
- */
 export const serverFetch = async (path) => {
   try {
+    const token = getAuthToken();
     const res = await fetch(buildApiUrl(path), {
       cache: "no-store",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
 
     if (!res.ok) {
       const errorText = await res.text();
-      return {
-        success: false,
-        message: errorText || "Request failed",
-      };
+      return { success: false, message: errorText || "Request failed" };
     }
 
     return await res.json().catch(() => ({}));
   } catch (error) {
-    console.warn("⚠️ API request failed:", error);
+    console.warn("API request failed:", error);
     return buildFallbackResponse(path, error);
   }
 };
 
-// =========================================================================
-// 👨‍💼 2. SELLER API ACTIONS (Dashboard & Analytics)
-// =========================================================================
-
-/**
- * 📊 নির্দিষ্ট সেলারের ইমেইল অনুযায়ী লাইভ ড্যাশবোর্ড স্ট্যাটস নিয়ে আসা
- * @param {string} email - লগইন থাকা সেলারের ইমেইল
- */
 export const getSellerStats = async (email) => {
-  try {
-    if (!email) {
-      console.warn("⚠️ getSellerStats: Email target missing.");
-      return {
-        success: false,
-        stats: {
-          totalProducts: 0,
-          totalSales: 0,
-          totalRevenue: 0,
-          pendingOrders: 0,
-        },
-      };
-    }
-
-    // ব্যাকএন্ডের ডাইনামিক রুট (/api/seller/stats/:email) কল করা হচ্ছে
-    return await serverFetch(`api/seller/stats/${email}`);
-  } catch (error) {
-    console.error("❌ Error fetching seller stats from server:", error);
-    return {
-      success: false,
-      stats: {
-        totalProducts: 0,
-        totalSales: 0,
-        totalRevenue: 0,
-        pendingOrders: 0,
-      },
-    };
+  if (!email) {
+    return { success: false, stats: { totalProducts: 0, totalSales: 0, totalRevenue: 0, pendingOrders: 0 } };
   }
+  return await serverFetch(`api/seller/stats/${email}`);
 };
