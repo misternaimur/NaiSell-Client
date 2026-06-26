@@ -4,11 +4,12 @@ import Categories from "@/components/Categories";
 import CuratedArrivals from "@/components/CuratedArrivals";
 import SuccessStories from "@/components/SuccessStories";
 import MarketplaceStats from "@/components/MarketplaceStats";
-import SustainabilityImpact from "@/components/SustainabilityImpact"; // Capital 'I' ফিক্স করা হয়েছে
+import SustainabilityImpact from "@/components/SustainabilityImpact";
+import TrustedSellers from "@/components/TrustedSellers";
 
 export default function Home() {
   return (
-    <div className="flex flex-col w-full bg-[#f1f5f0] font-sans dark:bg-black">
+    <div className="flex flex-col w-full bg-surface font-sans">
       {/* Hero Section */}
       <Hero />
 
@@ -26,6 +27,9 @@ export default function Home() {
 
       {/* Extra Section: Sustainability Impact */}
       <SustainabilityImpact />
+
+      {/* Extra Section: Trusted Sellers */}
+      <TrustedSellers />
     </div>
   );
 }
