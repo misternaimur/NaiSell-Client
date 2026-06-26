@@ -267,9 +267,9 @@ export default function SigninPage() {
               <p className="text-xs text-center text-outline uppercase tracking-wider font-semibold mb-3 font-sans">Quick Demo Login</p>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { role: "Buyer", email: "demo@naisell.com", name: "Demo Buyer", color: "bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" },
-                  { role: "Seller", email: "seller@naisell.com", name: "Demo Seller", color: "bg-secondary-container/20 text-secondary-container hover:bg-secondary-container/30 border-secondary-container/30" },
-                  { role: "Admin", email: "admin@naisell.com", name: "Demo Admin", color: "bg-tertiary-container/20 text-on-tertiary-container hover:bg-tertiary-container/30 border-tertiary-container/30" },
+                  { role: "Buyer", email: "demo@naisell.com", name: "Demo Buyer", password: "password123", color: "bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" },
+                  { role: "Seller", email: "seller@naisell.com", name: "Demo Seller", password: "password123", color: "bg-secondary-container/20 text-secondary-container hover:bg-secondary-container/30 border-secondary-container/30" },
+                  { role: "Admin", email: "admin@admin.com", name: "Demo Admin", password: "admin321", color: "bg-tertiary-container/20 text-on-tertiary-container hover:bg-tertiary-container/30 border-tertiary-container/30" },
                 ].map((demo) => (
                   <button
                     key={demo.role}
@@ -282,12 +282,12 @@ export default function SigninPage() {
                         await fetch("/api/seed", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ email: demo.email, password: "password123", name: demo.name, role: demo.role.toLowerCase() }),
+                          body: JSON.stringify({ email: demo.email, password: demo.password, name: demo.name, role: demo.role.toLowerCase() }),
                         });
 
                         // Then login
                         await authClient.signIn.email(
-                          { email: demo.email, password: "password123", callbackURL: "/" },
+                          { email: demo.email, password: demo.password, callbackURL: "/" },
                           {
                             onSuccess: () => {
                               toast.update(toastId, { render: `Logged in as ${demo.role}!`, type: "success", isLoading: false, autoClose: 1500 });
@@ -310,7 +310,9 @@ export default function SigninPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-outline text-center mt-2 font-sans">Password: password123</p>
+              <p className="text-[10px] text-outline text-center mt-2 font-sans">
+                Passwords: Buyer/Seller: password123 | Admin: admin321
+              </p>
             </div>
           </Form>
         </Card>
