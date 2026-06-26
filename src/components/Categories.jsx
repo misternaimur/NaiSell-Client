@@ -63,7 +63,7 @@ export default function Categories() {
                     boxShadow: "0 22px 35px -10px rgba(0, 54, 60, 0.08)",
                   }}
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="group cursor-pointer flex flex-col items-center justify-center bg-white p-6 sm:p-8 lg:p-10 xl:p-12 rounded-2xl border border-outline-variant/40 shadow-[0_4px_12px_rgba(0,0,0,0.01)] h-full min-h-[180px] lg:min-h-[220px] xl:min-h-[260px]"
+                  className="group cursor-pointer flex flex-col items-center justify-center bg-surface-container-lowest p-6 sm:p-8 lg:p-10 xl:p-12 rounded-2xl border border-outline-variant/40 shadow-[0_4px_12px_rgba(0,0,0,0.01)] h-full min-h-[180px] lg:min-h-[220px] xl:min-h-[260px]"
                 >
                   {/* Icon Wrapper */}
                   <div className="w-14 h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 rounded-full bg-primary/5 text-on-surface-variant flex items-center justify-center mb-5 xl:mb-6 group-hover:bg-primary group-hover:text-white transition-colors duration-300 shadow-sm">
