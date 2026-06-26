@@ -51,7 +51,7 @@ export default function SustainabilityImpact() {
           {/* LEFT COLUMN: TEXT INFO */}
           <div className="lg:col-span-5 space-y-6">
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-outline-variant/40 shadow-[0_2px_6px_rgba(0,0,0,0.02)] text-primary rounded-full text-xs font-bold uppercase tracking-wider font-sans">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant/40 shadow-[0_2px_6px_rgba(0,0,0,0.02)] text-primary rounded-full text-xs font-bold uppercase tracking-wider font-sans">
                 <FontAwesomeIcon
                   icon={faGlobeAmericas}
                   className="text-primary animate-[spin_8s_linear_infinite]"
@@ -81,7 +81,7 @@ export default function SustainabilityImpact() {
                     className="text-xs group-hover:translate-x-1 transition-transform"
                   />
                 }
-                className="group bg-primary hover:bg-primary/95 text-white font-semibold px-6 h-12 rounded-[8px] shadow-sm transition-all duration-300 font-sans"
+                className="group bg-primary hover:bg-primary/95 text-on-primary font-semibold px-6 h-12 rounded-[8px] shadow-sm transition-all duration-300 font-sans"
               >
                 Learn More About Our Green Initiative
               </Button>
@@ -102,7 +102,7 @@ export default function SustainabilityImpact() {
                   ease: [0.16, 1, 0.3, 1],
                 }}
                 whileHover={{ y: -8 }}
-                className="bg-white/80 backdrop-blur-md border border-white hover:border-primary/30 rounded-2xl p-6 flex flex-col justify-between h-full shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-default"
+                className="bg-surface-container-low/80 backdrop-blur-md border border-outline-variant/30 hover:border-primary/30 rounded-2xl p-6 flex flex-col justify-between h-full shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] transition-all duration-300 group cursor-default"
               >
                 <div className="space-y-5">
                   {/* Icon Wrapper */}

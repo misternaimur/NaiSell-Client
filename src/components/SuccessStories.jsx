@@ -70,7 +70,7 @@ export default function SuccessStories({ stories = [] }) {
                 boxShadow: "0 16px 32px -12px rgba(0,0,0,0.06)",
               }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white rounded-2xl p-6 lg:p-8 border border-outline-variant/30 flex flex-col justify-between h-full shadow-[0_4px_16px_rgba(0,0,0,0.01)] relative overflow-hidden group"
+              className="bg-surface-container-lowest rounded-2xl p-6 lg:p-8 border border-outline-variant/30 flex flex-col justify-between h-full shadow-[0_4px_16px_rgba(0,0,0,0.01)] relative overflow-hidden group"
             >
               {/* Quote Icon Overlay */}
               <div className="absolute top-4 right-6 text-primary/5 group-hover:text-primary/10 transition-colors duration-300">

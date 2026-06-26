@@ -46,7 +46,7 @@ export default function MarketplaceStats({ stats }) {
   };
 
   return (
-    <section className="bg-primary py-16 md:py-20 px-4 sm:px-6 lg:px-12 text-white relative overflow-hidden">
+    <section className="bg-primary py-16 md:py-20 px-4 sm:px-6 lg:px-12 text-on-primary relative overflow-hidden">
       {/* Background Decorative Circles */}
       <div className="absolute -top-16 -left-16 w-64 h-64 bg-white/5 rounded-full pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-secondary-container/10 rounded-full pointer-events-none" />
@@ -72,7 +72,7 @@ export default function MarketplaceStats({ stats }) {
               </div>
 
               {/* Counter Value */}
-              <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white font-display">
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-on-primary font-display">
                 {formatNumber(stat.value)}
               </h3>
 

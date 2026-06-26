@@ -122,7 +122,7 @@ export default function Hero() {
             animate={{ opacity: 1, x: 0, y: 0, rotate: -5 }}
             whileHover={{ rotate: -2, scale: 1.01 }}
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-2 left-4 md:-left-4 w-[72%] h-[68%] rounded-[24px] overflow-hidden shadow-2xl z-20 border-[6px] border-white cursor-pointer"
+            className="absolute bottom-2 left-4 md:-left-4 w-[72%] h-[68%] rounded-[24px] overflow-hidden shadow-2xl z-20 border-[6px] border-surface-container-lowest cursor-pointer"
           >
             <img
               className="w-full h-full object-cover"
@@ -136,7 +136,7 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-            className="absolute top-[38%] left-[16%] md:left-[8%] w-14 h-14 lg:w-16 lg:h-16 bg-secondary-container text-on-secondary-container rounded-full z-30 flex items-center justify-center shadow-lg border-4 border-white"
+            className="absolute top-[38%] left-[16%] md:left-[8%] w-14 h-14 lg:w-16 lg:h-16 bg-secondary-container text-on-secondary-container rounded-full z-30 flex items-center justify-center shadow-lg border-4 border-surface-container-lowest"
           >
             <TagDollar className="w-6 h-6 lg:w-7 lg:h-7" />
           </motion.div>
