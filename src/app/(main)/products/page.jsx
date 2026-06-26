@@ -1,18 +1,12 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-/** @format */
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Button, Avatar } from "@heroui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
-import { faHeart } from "@fortawesome/free-regular-svg-icons";
+import { faCheckCircle, faHeart } from "@fortawesome/free-solid-svg-icons";
 import { Magnifier, Hashtag } from "@gravity-ui/icons";
-import { serverFetch } from "@/lib/api/server";
 import { useSession } from "@/lib/auth-client";
 import {
   addToWishlist,
@@ -23,16 +17,18 @@ import {
 const getConditionStyle = (condition) => {
   switch (condition?.toLowerCase()) {
     case "pristine":
-      return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+      return "bg-primary/10 text-primary border border-primary/20";
     case "like new":
-      return "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20";
+      return "bg-secondary-container/20 text-secondary-container border border-secondary-container/30";
     case "refurbished":
-      return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+      return "bg-tertiary-container/20 text-on-tertiary-container border border-tertiary-container/30";
     case "good":
     default:
-      return "bg-slate-500/10 text-slate-400 border border-slate-500/20";
+      return "bg-outline-variant/30 text-outline border border-outline-variant/40";
   }
 };
+
+const ITEMS_PER_PAGE = 12;
 
 export default function AllProductsPage() {
   const [products, setProducts] = useState([]);
@@ -43,426 +39,220 @@ export default function AllProductsPage() {
   const { data: session } = useSession();
   const buyerEmail = session?.user?.email || "";
 
-  // Filters
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
-
-  const categories = [
-    "Electronics",
-    "Gadgets",
-    "Fashion",
-    "Home Appliances",
-    "Automobiles",
-  ];
-  const conditions = ["Used", "Like New", "Refurbished", "Pristine", "Good"];
-
-  // Pagination State
-  const ITEMS_PER_PAGE = 8;
+  const [sortBy, setSortBy] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
-  const paginatedProducts = products.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
 
-  // Fetch all products
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const queryParams = new URLSearchParams({
-        search: search.trim(),
-        category,
-        condition,
-      }).toString();
-
-      const res = await serverFetch(`api/products?${queryParams}`);
-      if (res && Array.isArray(res)) {
-        setProducts(res);
-      } else if (res && Array.isArray(res.products)) {
-        setProducts(res.products);
-      } else if (res && Array.isArray(res.result)) {
-        setProducts(res.result);
-      } else {
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, category, condition]);
-
-  // Reset pagination immediately when filter values change to avoid rendering mismatch
   useEffect(() => {
-    setCurrentPage(1);
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (search) params.set("search", search);
+        if (category) params.set("category", category);
+        if (condition) params.set("condition", condition);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/products?${params}`);
+        const data = await res.json();
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProducts();
-  }, [search, category, condition, fetchProducts]);
+  }, [search, category, condition]);
 
   useEffect(() => {
     const loadWishlist = async () => {
-      if (!buyerEmail) {
-        setWishlistMap({});
-        return;
-      }
-
+      if (!buyerEmail) return;
       try {
         const res = await getBuyerWishlist(buyerEmail);
-        const items = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.products)
-            ? res.products
-            : Array.isArray(res?.result)
-              ? res.result
-              : [];
-
+        const items = Array.isArray(res) ? res : [];
         const nextMap = {};
         items.forEach((item) => {
-          const productId = item.productId || item.product?._id || item._id;
-          if (productId) {
-            nextMap[productId] = item._id;
-          }
+          const pid = item.productId || item._id;
+          if (pid) nextMap[pid] = item._id;
         });
-
         setWishlistMap(nextMap);
       } catch (error) {
         console.error("Error loading wishlist:", error);
       }
     };
-
     loadWishlist();
   }, [buyerEmail]);
 
   const handleToggleWishlist = async (product) => {
-    if (!buyerEmail) {
-      alert("Please sign in to save products to your wishlist.");
-      return;
-    }
-
-    const productId = product._id || product.id;
-    const existingItemId = wishlistMap[productId];
-
-    if (existingItemId) {
+    if (!buyerEmail) return alert("Please sign in to save products.");
+    const pid = product._id;
+    if (wishlistMap[pid]) {
       try {
-        setWishlistLoadingId(productId);
-        const res = await removeFromWishlist(existingItemId, buyerEmail);
-        if (res?.success !== false) {
-          setWishlistMap((prev) => {
-            const next = { ...prev };
-            delete next[productId];
-            return next;
-          });
-        } else {
-          alert(`❌ ${res?.message || "Unable to remove item from wishlist."}`);
-        }
-      } catch (error) {
-        console.error("Error removing product from wishlist:", error);
-      } finally {
-        setWishlistLoadingId(null);
-      }
-      return;
-    }
-
-    try {
-      setWishlistLoadingId(productId);
-      const payload = {
-        email: buyerEmail,
-        productId,
-        title: product.title,
-        image: product.images?.[0] || product.image || "",
-        price: product.price,
-        category: product.category,
-        condition: product.condition,
-        stock: product.stock ?? 1,
-      };
-
-      const res = await addToWishlist(payload);
-      if (res?.success !== false) {
-        const savedId =
-          res?.item?._id || res?._id || res?.data?._id || productId;
-        setWishlistMap((prev) => ({ ...prev, [productId]: savedId }));
-      } else {
-        alert(`❌ ${res?.message || "Unable to add item to wishlist."}`);
-      }
-    } catch (error) {
-      console.error("Error adding product to wishlist:", error);
-    } finally {
-      setWishlistLoadingId(null);
+        setWishlistLoadingId(pid);
+        await removeFromWishlist(wishlistMap[pid], buyerEmail);
+        setWishlistMap((prev) => { const n = { ...prev }; delete n[pid]; return n; });
+      } catch (e) { console.error(e); }
+      finally { setWishlistLoadingId(null); }
+    } else {
+      try {
+        setWishlistLoadingId(pid);
+        await addToWishlist({ buyerEmail, productId: pid, title: product.title, image: product.images?.[0], price: product.price, sellerEmail: product.sellerEmail });
+        setWishlistMap((prev) => ({ ...prev, [pid]: pid }));
+      } catch (e) { console.error(e); }
+      finally { setWishlistLoadingId(null); }
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#080c18] pb-24 pt-12 text-white px-4 sm:px-8 lg:px-16 overflow-hidden relative">
-      {/* Background glow */}
-      <div className="absolute top-0 left-1/4 w-125 h-125 bg-emerald-500/5 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-125 h-125 bg-teal-500/5 blur-[150px] rounded-full pointer-events-none" />
+  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
 
-      <div className="max-w-350 mx-auto relative z-10">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white font-display">
-            Explore <span className="text-emerald-500">All Products</span>
+  const sortedProducts = [...products].sort((a, b) => {
+    if (sortBy === "price-low") return (a.price || 0) - (b.price || 0);
+    if (sortBy === "price-high") return (b.price || 0) - (a.price || 0);
+    return 0;
+  });
+
+  const paginatedProducts = sortedProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  return (
+    <div className="min-h-screen bg-surface py-10 md:py-16 px-4 sm:px-6 lg:px-12">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-on-surface font-display">
+            Explore <span className="text-primary">All Products</span>
           </h1>
-          <p className="text-sm sm:text-base text-slate-400 mt-3 max-w-2xl mx-auto">
-            Find the perfect deals on pre-owned and refurbished items. Use the
-            filters below to narrow down your search.
+          <p className="text-sm text-on-surface-variant mt-2 font-sans">
+            Find the perfect deals on pre-owned and refurbished items.
           </p>
         </div>
 
-        {/* 🔍 Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-900/40 backdrop-blur-md border border-slate-800 p-4 rounded-2xl shadow-lg mb-10">
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 bg-surface-container-lowest border border-outline-variant/30 p-4 rounded-2xl mb-8">
           <div className="relative flex items-center col-span-1 md:col-span-2">
-            <span className="absolute left-4 text-slate-500">
-              <Magnifier className="w-4 h-4" />
-            </span>
+            <span className="absolute left-3 text-outline"><Magnifier className="w-4 h-4" /></span>
             <input
               type="text"
-              placeholder="Search products by title..."
+              placeholder="Search products..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-800 bg-slate-950/40 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              className="w-full h-10 pl-10 pr-4 rounded-xl border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans placeholder-outline focus:outline-none focus:border-primary transition"
             />
           </div>
-
           <div className="relative flex items-center">
-            <span className="absolute left-4 text-slate-500">
-              <Hashtag className="w-4 h-4" />
-            </span>
+            <span className="absolute left-3 text-outline"><Hashtag className="w-4 h-4" /></span>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full h-11 pl-11 pr-4 rounded-xl border border-slate-800 bg-slate-950/40 text-white focus:outline-none focus:border-emerald-500 transition-colors appearance-none cursor-pointer"
+              onChange={(e) => { setCategory(e.target.value); setCurrentPage(1); }}
+              className="w-full h-10 pl-10 pr-4 rounded-xl border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary transition appearance-none cursor-pointer"
             >
               <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option
-                  key={cat}
-                  value={cat}
-                  className="bg-slate-900 text-white"
-                >
-                  {cat}
-                </option>
+              {["Electronics", "Furniture", "Vehicles", "Fashion", "Mobile Phones", "Gaming", "Sports", "Jewelry"].map((c) => (
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
-
           <div className="relative flex items-center">
             <select
               value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-slate-800 bg-slate-950/40 text-white focus:outline-none focus:border-emerald-500 transition-colors appearance-none cursor-pointer"
+              onChange={(e) => { setCondition(e.target.value); setCurrentPage(1); }}
+              className="w-full h-10 px-4 rounded-xl border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary transition appearance-none cursor-pointer"
             >
               <option value="">All Conditions</option>
-              {conditions.map((cond) => (
-                <option
-                  key={cond}
-                  value={cond}
-                  className="bg-slate-900 text-white"
-                >
-                  {cond}
-                </option>
+              {["Pristine", "Like New", "Refurbished", "Good", "Used"].map((c) => (
+                <option key={c} value={c}>{c}</option>
               ))}
+            </select>
+          </div>
+          <div className="relative flex items-center">
+            <select
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+              className="w-full h-10 px-4 rounded-xl border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary transition appearance-none cursor-pointer"
+            >
+              <option value="">Sort By</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
             </select>
           </div>
         </div>
 
-        {/* 📦 Products Grid */}
+        {/* Products Grid */}
         {loading ? (
-          <div className="flex justify-center items-center py-24">
-            <span className="animate-spin rounded-full h-10 w-10 border-2 border-emerald-500 border-t-transparent"></span>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="animate-pulse rounded-2xl border border-outline-variant/30 bg-surface-container-lowest overflow-hidden">
+                <div className="h-48 bg-surface-container-high" />
+                <div className="p-4 space-y-2"><div className="h-4 bg-surface-container-high rounded w-3/4" /><div className="h-6 bg-surface-container-high rounded w-1/3" /></div>
+              </div>
+            ))}
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-20 bg-slate-900/20 border border-slate-800 rounded-2xl">
-            <p className="text-slate-400 text-lg">
-              No products found matching the criteria.
-            </p>
-          </div>
+        ) : paginatedProducts.length === 0 ? (
+          <p className="text-on-surface-variant text-center py-16 font-sans">No products found matching the criteria.</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {paginatedProducts.map((product) => (
-                <motion.article
-                  key={product._id}
-                  whileHover={{
-                    y: -8,
-                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6)",
-                  }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="group bg-slate-900/30 backdrop-blur-md rounded-2xl overflow-hidden border border-slate-850 flex flex-col h-full transition-all duration-300 shadow-xl"
-                >
-                  {/* IMAGE CONTAINER */}
-                  <div className="relative aspect-4/3 w-full bg-slate-950 overflow-hidden">
-                    <Image
-                      src={
-                        product.images && product.images[0]
-                          ? product.images[0]
-                          : product.image
-                            ? product.image
-                            : "https://via.placeholder.com/400x300"
-                      }
-                      alt={product.title}
-                      fill
-                      unoptimized
-                      className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-slate-950/30 via-transparent to-transparent pointer-events-none" />
-
-                    {/* Condition Badge */}
-                    <span
-                      className={`absolute top-4 left-4 text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-lg backdrop-blur-md ${getConditionStyle(
-                        product.condition,
-                      )}`}
-                    >
-                      {product.condition || "Available"}
-                    </span>
-
-                    {/* Wishlist Button */}
-                    <Button
-                      isIconOnly
-                      radius="full"
-                      onClick={() => handleToggleWishlist(product)}
-                      disabled={
-                        wishlistLoadingId === (product._id || product.id)
-                      }
-                      className={`absolute top-4 right-4 bg-slate-950/60 backdrop-blur-md min-w-9 w-9 h-9 shadow-lg border border-slate-800/40 transition-all duration-200 ${
-                        wishlistMap[product._id || product.id]
-                          ? "bg-emerald-500 text-white"
-                          : "text-slate-300 hover:bg-emerald-500 hover:text-white"
-                      }`}
-                    >
-                      <FontAwesomeIcon icon={faHeart} className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-
-                  {/* PRODUCT INFO AREA */}
-                  <div className="p-5 flex flex-col grow justify-between space-y-4 bg-slate-900/10">
-                    <div className="space-y-1.5">
-                      <h3 className="text-sm sm:text-base font-bold text-slate-200 line-clamp-1 group-hover:text-emerald-400 transition-colors duration-200 font-sans">
-                        {product.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 font-medium font-sans">
-                        {product.category}
-                      </p>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-1">
-                      <span className="text-base sm:text-lg font-black text-emerald-400">
-                        ৳
-                        {product.price?.toLocaleString("en-IN") ||
-                          product.price}
-                      </span>
-                      <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-950/60 rounded-md border border-slate-800">
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          className="w-2.5 h-2.5 text-amber-400"
-                        />
-                        <span className="text-[11px] font-bold text-slate-300">
-                          4.8
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* SELLER PROFILES FOOTER */}
-                    <div className="flex items-center gap-2 pt-3 border-t border-slate-850">
-                      <Avatar
-                        size="sm"
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${
-                          product.sellerInfo?.name ||
-                          product.sellerEmail ||
-                          "Seller"
-                        }`}
-                        className="w-6 h-6 bg-slate-850 border border-slate-800"
+                <Link key={product._id} href={`/products/${product._id}`}>
+                  <motion.article
+                    whileHover={{ y: -6, boxShadow: "0 16px 32px -12px rgba(0,0,0,0.08)" }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="group bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 flex flex-col h-full cursor-pointer hover:border-primary/30 transition-colors"
+                  >
+                    <div className="relative aspect-[4/3] w-full bg-surface-container-high overflow-hidden">
+                      <img
+                        src={product.images?.[0] || "https://via.placeholder.com/400x300"}
+                        alt={product.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-bold text-slate-400 font-sans truncate max-w-30">
-                          {product.sellerInfo?.name ||
-                            product.sellerEmail ||
-                            "Unknown Seller"}
-                        </span>
-                        <FontAwesomeIcon
-                          icon={faCheckCircle}
-                          className="w-3 h-3 text-emerald-500"
-                        />
+                      <span className={`absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${getConditionStyle(product.condition)}`}>
+                        {product.condition || "Available"}
+                      </span>
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleToggleWishlist(product); }}
+                        disabled={wishlistLoadingId === product._id}
+                        className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                          wishlistMap[product._id] ? "bg-primary text-on-primary" : "bg-surface-container-lowest/80 text-on-surface-variant hover:bg-primary hover:text-on-primary"
+                        }`}
+                      >
+                        <FontAwesomeIcon icon={faHeart} className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="p-4 flex flex-col flex-grow justify-between">
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-bold text-on-surface line-clamp-1 group-hover:text-primary transition-colors font-sans">{product.title}</h3>
+                        <p className="text-xs text-outline font-sans">{product.category}</p>
+                      </div>
+                      <div className="flex justify-between items-center mt-3">
+                        <span className="text-lg font-extrabold text-primary font-display">৳{product.price?.toLocaleString()}</span>
+                        <div className="flex items-center gap-1.5">
+                          <FontAwesomeIcon icon={faCheckCircle} className="w-3 h-3 text-primary" />
+                          <span className="text-xs text-on-surface-variant font-sans truncate max-w-20">{product.sellerInfo?.name || "Seller"}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.article>
+                  </motion.article>
+                </Link>
               ))}
             </div>
 
-            {/* Pagination Bar */}
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12 bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
-                {/* Showing X–Y of Z */}
-                <p className="text-xs text-slate-500 font-medium">
-                  Showing{" "}
-                  <span className="text-slate-300 font-bold">
-                    {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
-                    {Math.min(currentPage * ITEMS_PER_PAGE, products.length)}
-                  </span>{" "}
-                  of{" "}
-                  <span className="text-slate-300 font-bold">
-                    {products.length}
-                  </span>{" "}
-                  products
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 bg-surface-container-lowest border border-outline-variant/30 p-4 rounded-2xl">
+                <p className="text-xs text-outline font-sans">
+                  Showing <span className="text-on-surface font-bold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, products.length)}</span> of <span className="text-on-surface font-bold">{products.length}</span> products
                 </p>
-
-                {/* Page Buttons */}
                 <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-bold"
-                  >
-                    ‹
-                  </button>
-
+                  <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="h-9 w-9 flex items-center justify-center rounded-xl border border-outline-variant/40 bg-surface text-on-surface-variant hover:bg-surface-container-high disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-bold">‹</button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(
-                      (page) =>
-                        page === 1 ||
-                        page === totalPages ||
-                        Math.abs(page - currentPage) <= 1,
-                    )
-                    .reduce((acc, page, idx, arr) => {
-                      if (idx > 0 && page - arr[idx - 1] > 1) {
-                        acc.push("...");
-                      }
-                      acc.push(page);
-                      return acc;
-                    }, [])
-                    .map((item, idx) =>
-                      item === "..." ? (
-                        <span
-                          key={`ellipsis-${idx}`}
-                          className="h-9 w-9 flex items-center justify-center text-slate-600 text-xs select-none"
-                        >
-                          ···
-                        </span>
-                      ) : (
-                        <button
-                          key={item}
-                          onClick={() => setCurrentPage(item)}
-                          className={`h-9 w-9 flex items-center justify-center rounded-xl border text-xs font-bold transition-all ${
-                            currentPage === item
-                              ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                              : "border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white"
-                          }`}
-                        >
-                          {item}
-                        </button>
-                      ),
-                    )}
-
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-bold"
-                  >
-                    ›
-                  </button>
+                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .reduce((acc, p, idx, arr) => { if (idx > 0 && p - arr[idx - 1] > 1) acc.push("..."); acc.push(p); return acc; }, [])
+                    .map((item, idx) => item === "..." ? (
+                      <span key={`e-${idx}`} className="h-9 w-9 flex items-center justify-center text-outline text-xs">···</span>
+                    ) : (
+                      <button key={item} onClick={() => setCurrentPage(item)} className={`h-9 w-9 flex items-center justify-center rounded-xl border text-xs font-bold transition-all ${currentPage === item ? "bg-primary border-primary text-on-primary shadow-sm" : "border-outline-variant/40 bg-surface text-on-surface-variant hover:bg-surface-container-high"}`}>{item}</button>
+                    ))}
+                  <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="h-9 w-9 flex items-center justify-center rounded-xl border border-outline-variant/40 bg-surface text-on-surface-variant hover:bg-surface-container-high disabled:opacity-30 disabled:cursor-not-allowed transition text-sm font-bold">›</button>
                 </div>
               </div>
             )}
