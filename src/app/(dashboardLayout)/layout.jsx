@@ -9,7 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 const DashboardLayout = ({ children }) => {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex bg-[#080c18] text-white overflow-hidden">
+      <div className="min-h-screen flex bg-background text-on-background overflow-hidden">
         {/* বামপাশে ডাইনামিক সাইডবার */}
         <DashboardSideBar />
 

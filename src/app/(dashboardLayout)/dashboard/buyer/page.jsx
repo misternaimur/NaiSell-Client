@@ -13,7 +13,7 @@ import {
 // 🎯 ডেমো ডাটা ফেলে দিয়ে props হিসেবে ডাটা রিসিভ করা হচ্ছে
 const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
   return (
-    <div className="space-y-8 mt-6 pb-12 text-white">
+    <div className="space-y-8 mt-6 pb-12 text-on-background">
       {/* 🎯 হেডিং সেকশন */}
       <DashboardHeading
         title="Welcome Back!"
@@ -23,34 +23,34 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
       {/* 📊 বায়ার স্ট্যাটস কার্ড গ্রিড */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Total Orders */}
-        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800 shadow-xl rounded-2xl">
+        <div className="bg-surface-container border border-outline-variant/60 shadow-sm rounded-2xl">
           <div className="p-6 flex flex-row items-center justify-between">
             <div className="space-y-1">
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+              <span className="text-on-surface-variant text-xs font-bold uppercase tracking-wider">
                 Total Orders
               </span>
-              <h2 className="text-3xl font-black text-white tracking-tight">
+              <h2 className="text-3xl font-black text-on-surface tracking-tight">
                 {buyerStats?.totalOrders || 0}
               </h2>
             </div>
-            <div className="p-3.5 bg-indigo-500/10 text-indigo-400 rounded-2xl border border-indigo-500/20">
+            <div className="p-3.5 bg-primary/10 text-primary rounded-2xl border border-primary/20">
               <FaShoppingBag size={22} />
             </div>
           </div>
         </div>
 
         {/* Wishlist Count */}
-        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800 shadow-xl rounded-2xl">
+        <div className="bg-surface-container border border-outline-variant/60 shadow-sm rounded-2xl">
           <div className="p-6 flex flex-row items-center justify-between">
             <div className="space-y-1">
-              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+              <span className="text-on-surface-variant text-xs font-bold uppercase tracking-wider">
                 Wishlist Count
               </span>
-              <h2 className="text-3xl font-black text-pink-400 tracking-tight">
+              <h2 className="text-3xl font-black text-secondary tracking-tight">
                 {buyerStats?.wishlistCount || 0}
               </h2>
             </div>
-            <div className="p-3.5 bg-pink-500/10 text-pink-400 rounded-2xl border border-pink-500/20">
+            <div className="p-3.5 bg-secondary/10 text-secondary rounded-2xl border border-secondary/20">
               <FaHeart size={22} />
             </div>
           </div>
@@ -60,10 +60,10 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
       {/* 📦 Recent Purchases সেকশন */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white tracking-wide">
+          <h3 className="text-lg font-bold text-on-background tracking-wide">
             Recent Purchases
           </h3>
-          <span className="text-xs text-cyan-400 font-semibold cursor-pointer hover:underline flex items-center gap-1">
+          <span className="text-xs text-primary font-semibold cursor-pointer hover:underline flex items-center gap-1">
             View Order History <FaArrowRight size={10} />
           </span>
         </div>
@@ -74,7 +74,7 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
             recentPurchases.map((item) => (
               <div
                 key={item.id || item._id}
-                className="bg-slate-900/20 backdrop-blur-md border border-slate-800/80 hover:border-slate-700/80 transition-all duration-300 shadow-lg rounded-2xl"
+                className="bg-surface-container-low border border-outline-variant/50 hover:border-outline-variant/80 transition-all duration-300 shadow-sm rounded-2xl"
               >
                 <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   {/* প্রোডাক্ট ইনফো */}
@@ -86,10 +86,10 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
                         alt={item.productName || "Product"}
                         width={64}
                         height={64}
-                        className="rounded-2xl border border-slate-700 object-cover w-16 h-16 shrink-0"
+                        className="rounded-2xl border border-outline-variant object-cover w-16 h-16 shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center text-emerald-400 text-xl font-black shrink-0 shadow-inner">
+                      <div className="w-16 h-16 rounded-2xl bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary text-xl font-black shrink-0 shadow-inner">
                         {item.productName
                           ? item.productName[0].toUpperCase()
                           : "P"}
@@ -97,25 +97,25 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
                     )}
 
                     <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-slate-100 max-w-md line-clamp-1">
+                      <h4 className="text-sm font-bold text-on-surface max-w-md line-clamp-1">
                         {item.productName}
                       </h4>
-                      <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                      <p className="text-xs text-on-surface-variant flex items-center gap-1.5">
                         <FaClock size={11} /> {item.date}
                       </p>
-                      <p className="text-sm font-black text-emerald-400 mt-1">
+                      <p className="text-sm font-black text-primary mt-1">
                         ৳{item.price?.toLocaleString("en-IN") || 0}
                       </p>
                     </div>
                   </div>
 
                   {/* স্ট্যাটাস ও অ্যাকশন বাটন */}
-                  <div className="flex items-center justify-between sm:justify-end gap-4 border-t border-slate-800/60 sm:border-none pt-3 sm:pt-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 border-t border-outline-variant/40 sm:border-none pt-3 sm:pt-0">
                     <span
                       className={`capitalize text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
                         item.status === "Delivered"
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : "bg-blue-500/10 text-blue-400"
+                          ? "bg-primary/10 text-primary"
+                          : "bg-secondary/10 text-secondary"
                       }`}
                     >
                       {item.status === "Delivered" && (
@@ -124,7 +124,7 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
                       {item.status || "Pending"}
                     </span>
 
-                    <button className="border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium text-xs px-3 py-1.5 rounded-xl transition-colors duration-200">
+                    <button className="border border-outline hover:bg-on-surface/5 text-on-surface-variant hover:text-on-surface font-medium text-xs px-3 py-1.5 rounded-xl transition-colors duration-200">
                       Track Order
                     </button>
                   </div>
@@ -133,7 +133,7 @@ const BuyerOverviewPage = ({ buyerStats, recentPurchases = [] }) => {
             ))
           ) : (
             // যদি কোনো পারচেজ হিস্ট্রি না থাকে
-            <div className="text-center py-8 text-sm text-slate-500 border border-dashed border-slate-800 rounded-2xl">
+            <div className="text-center py-8 text-sm text-on-surface-variant border border-dashed border-outline-variant rounded-2xl">
               No recent purchases found.
             </div>
           )}
