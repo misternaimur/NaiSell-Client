@@ -267,6 +267,49 @@ export default function SigninPage() {
                 Create an account
               </Link>
             </div>
+
+            {/* Demo Login Buttons */}
+            <div className="pt-4 border-t border-outline-variant/20">
+              <p className="text-xs text-center text-outline uppercase tracking-wider font-semibold mb-3 font-sans">Quick Demo Login</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { role: "Buyer", email: "demo@naisell.com", color: "bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" },
+                  { role: "Seller", email: "seller@naisell.com", color: "bg-secondary-container/20 text-secondary-container hover:bg-secondary-container/30 border-secondary-container/30" },
+                  { role: "Admin", email: "admin@naisell.com", color: "bg-tertiary-container/20 text-on-tertiary-container hover:bg-tertiary-container/30 border-tertiary-container/30" },
+                ].map((demo) => (
+                  <button
+                    key={demo.role}
+                    type="button"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      const toastId = toast.loading(`Signing in as ${demo.role}...`);
+                      try {
+                        await authClient.signIn.email(
+                          { email: demo.email, password: "password123", callbackURL: "/" },
+                          {
+                            onSuccess: () => {
+                              toast.update(toastId, { render: `Logged in as ${demo.role}!`, type: "success", isLoading: false, autoClose: 1500 });
+                              setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
+                            },
+                            onError: (ctx) => {
+                              toast.update(toastId, { render: ctx.error?.message || "Login failed", type: "error", isLoading: false, autoClose: 3000 });
+                              setIsLoading(false);
+                            },
+                          }
+                        );
+                      } catch {
+                        toast.update(toastId, { render: "Login failed", type: "error", isLoading: false, autoClose: 3000 });
+                        setIsLoading(false);
+                      }
+                    }}
+                    className={`px-3 py-2 rounded-lg border text-xs font-bold font-sans transition-all cursor-pointer ${demo.color}`}
+                  >
+                    {demo.role}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-outline text-center mt-2 font-sans">Password: password123</p>
+            </div>
           </Form>
         </Card>
       </motion.div>
