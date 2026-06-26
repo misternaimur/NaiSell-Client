@@ -1,6 +1,13 @@
 import { auth } from "@/lib/auth";
 import { MongoClient } from "mongodb";
 
+// A deterministic "password" derived from the user's email so we can sign them
+// back in via Better-Auth's email+password flow (which sets the proper session cookie)
+function deriveGooglePassword(email) {
+  // Simple deterministic password — never exposed to users
+  return `G@${Buffer.from(email).toString("base64").slice(0, 16)}#Nx9`;
+}
+
 export async function POST(request) {
   try {
     const { email, name, image } = await request.json();
@@ -9,50 +16,51 @@ export async function POST(request) {
       return Response.json({ error: "Email is required" }, { status: 400 });
     }
 
-    const client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
-    const db = client.db(process.env.DB_NAME);
+    const mongoClient = new MongoClient(process.env.MONGODB_URI);
+    await mongoClient.connect();
+    const db = mongoClient.db(process.env.DB_NAME);
 
-    // Check if user exists
-    let user = await db.collection("user").findOne({ email });
+    // Check if user already exists
+    const existingUser = await db.collection("user").findOne({ email });
 
-    if (!user) {
-      // Create new user via Better-Auth
+    const password = deriveGooglePassword(email);
+
+    if (!existingUser) {
+      // Create new user via Better-Auth with a deterministic password
       const result = await auth.api.signUpEmail({
         body: {
           email,
-          password: Math.random().toString(36).slice(-12) + "A1!", // Random password
+          password,
           name: name || email.split("@")[0],
+          role: "buyer",
         },
       });
 
-      // Update with image and role
-      if (result.user) {
+      // Update with image from Google
+      if (result?.user) {
         await db.collection("user").updateOne(
-          { _id: result.user.id },
+          { email },
           { $set: { image: image || "", role: "buyer" } }
         );
-        user = { id: result.user.id, email, name, image, role: "buyer" };
+      }
+    } else {
+      // Update image if changed
+      if (image && existingUser.image !== image) {
+        await db.collection("user").updateOne(
+          { email },
+          { $set: { image } }
+        );
       }
     }
 
-    // Create a session token for the user
-    const sessionToken = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    await mongoClient.close();
 
-    // Store session in Better-Auth's session collection
-    await db.collection("session").insertOne({
-      id: sessionToken,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      createdAt: new Date(),
-    });
-
-    await client.close();
-
+    // Return the deterministic password so the client can sign in via Better-Auth
+    // to get a proper session cookie
     return Response.json({
       success: true,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
-      sessionToken,
+      password,
+      role: existingUser?.role || "buyer",
     });
   } catch (error) {
     console.error("Google auth error:", error);

@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import DashboardHeading from "@/components/DashboardHeading";
 import { useSession } from "@/lib/auth-client";
 import { getBuyerStats, getBuyerOrders } from "@/lib/api/buyerActions";
