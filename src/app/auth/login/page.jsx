@@ -21,7 +21,9 @@ import {
   faEyeSlash,
   faArrowRightToBracket,
 } from "@fortawesome/free-solid-svg-icons";
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { authClient } from "../../../lib/auth-client";
+import { signInWithGoogle } from "../../../lib/firebase";
 import { toast } from "react-toastify";
 
 export default function SigninPage() {
@@ -118,6 +120,40 @@ export default function SigninPage() {
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
           >
+            {/* Google Login Button */}
+            <Button
+              type="button"
+              variant="bordered"
+              onClick={async () => {
+                const toastId = toast.loading("Connecting to Google...");
+                try {
+                  const result = await signInWithGoogle();
+                  if (result.success) {
+                    toast.update(toastId, { render: "Logged in with Google!", type: "success", isLoading: false, autoClose: 1500 });
+                    // Set session cookie and redirect
+                    document.cookie = `better-auth.session_token=${result.sessionToken}; path=/; max-age=${7 * 24 * 60 * 60}`;
+                    setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
+                  } else {
+                    throw new Error(result.error);
+                  }
+                } catch (err) {
+                  console.error("Google login error:", err);
+                  toast.update(toastId, { render: err.message || "Google login failed", type: "error", isLoading: false, autoClose: 3000 });
+                }
+              }}
+              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
+            >
+              <FontAwesomeIcon icon={faGoogle} className="text-base text-primary" />
+              Log in with Google
+            </Button>
+
+            {/* Divider */}
+            <div className="flex items-center my-1 w-full">
+              <div className="flex-1 border-t border-outline-variant/60"></div>
+              <span className="px-3 text-[11px] text-outline uppercase tracking-wider font-semibold">Or</span>
+              <div className="flex-1 border-t border-outline-variant/60"></div>
+            </div>
+
             {/* Email Field */}
             <Controller
               name="email"
@@ -231,9 +267,9 @@ export default function SigninPage() {
               <p className="text-xs text-center text-outline uppercase tracking-wider font-semibold mb-3 font-sans">Quick Demo Login</p>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { role: "Buyer", email: "demo@naisell.com", color: "bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" },
-                  { role: "Seller", email: "seller@naisell.com", color: "bg-secondary-container/20 text-secondary-container hover:bg-secondary-container/30 border-secondary-container/30" },
-                  { role: "Admin", email: "admin@naisell.com", color: "bg-tertiary-container/20 text-on-tertiary-container hover:bg-tertiary-container/30 border-tertiary-container/30" },
+                  { role: "Buyer", email: "demo@naisell.com", name: "Demo Buyer", color: "bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" },
+                  { role: "Seller", email: "seller@naisell.com", name: "Demo Seller", color: "bg-secondary-container/20 text-secondary-container hover:bg-secondary-container/30 border-secondary-container/30" },
+                  { role: "Admin", email: "admin@naisell.com", name: "Demo Admin", color: "bg-tertiary-container/20 text-on-tertiary-container hover:bg-tertiary-container/30 border-tertiary-container/30" },
                 ].map((demo) => (
                   <button
                     key={demo.role}
@@ -242,6 +278,14 @@ export default function SigninPage() {
                       setIsLoading(true);
                       const toastId = toast.loading(`Signing in as ${demo.role}...`);
                       try {
+                        // First try to create the user (ignore error if exists)
+                        await fetch("/api/seed", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: demo.email, password: "password123", name: demo.name, role: demo.role.toLowerCase() }),
+                        });
+
+                        // Then login
                         await authClient.signIn.email(
                           { email: demo.email, password: "password123", callbackURL: "/" },
                           {
