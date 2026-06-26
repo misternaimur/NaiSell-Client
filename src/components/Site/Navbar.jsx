@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { authClient, useSession } from "@/lib/auth-client";
 import Image from "next/image";
 import Logo from "../Logo";
+import ThemeToggle from "../ThemeToggle";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -79,6 +80,7 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           {!session && (
             <div className="hidden sm:flex items-center gap-3">
               <Link href="/auth/login">
@@ -88,7 +90,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/auth/register"
-                className="inline-flex items-center justify-center font-semibold text-xs bg-primary text-white shadow-sm hover:bg-primary/90 transition h-9 px-4 rounded-[8px] font-sans"
+                className="inline-flex items-center justify-center font-semibold text-xs bg-primary text-on-primary shadow-sm hover:bg-primary/90 transition h-9 px-4 rounded-[8px] font-sans"
               >
                 Register
               </Link>
@@ -111,7 +113,7 @@ export default function Navbar() {
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-3 w-56 bg-white border border-outline-variant/40 rounded-2xl shadow-xl py-2 z-55 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 mt-3 w-56 bg-surface-container-lowest border border-outline-variant/40 rounded-2xl shadow-xl py-2 z-55 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="px-4 py-2.5 border-b border-outline-variant/20 mb-1.5 cursor-default">
                     <p className="text-[10px] text-primary font-bold uppercase tracking-wider font-sans">
                       {session?.user?.role || "User"} Account
@@ -190,7 +192,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="mt-3 rounded-2xl border border-outline-variant/40 bg-white p-5 lg:hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="mt-3 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest p-5 lg:hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <Link
@@ -220,7 +222,7 @@ export default function Navbar() {
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="rounded-[8px] bg-primary py-2.5 text-center text-sm text-white font-medium transition hover:bg-primary/90 font-sans"
+                    className="rounded-[8px] bg-primary py-2.5 text-center text-sm text-on-primary font-medium transition hover:bg-primary/90 font-sans"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Register

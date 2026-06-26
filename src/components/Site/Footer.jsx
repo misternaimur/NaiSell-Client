@@ -23,7 +23,7 @@ export default function Footer() {
           {/* BRAND COLUMN */}
           <div className="space-y-6">
             <Link href="/" className="flex items-center gap-3 no-underline">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-on-primary shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
                 <span className="text-base font-bold tracking-tight font-display">
                   N
                 </span>
@@ -43,7 +43,7 @@ export default function Footer() {
                 as={Link}
                 href="#"
                 aria-label="Facebook"
-                className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-outline-variant bg-white text-on-surface-variant transition-all duration-200 hover:border-primary hover:text-primary hover:scale-[1.02]"
+                className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-all duration-200 hover:border-primary hover:text-primary hover:scale-[1.02]"
               >
                 <LogoFacebook className="h-4 w-4" />
               </HeroLink>
@@ -51,7 +51,7 @@ export default function Footer() {
               <Link
                 href="#"
                 aria-label="GitHub"
-                className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-outline-variant bg-white text-on-surface-variant transition-all duration-200 hover:border-primary hover:text-primary hover:scale-[1.02]"
+                className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-all duration-200 hover:border-primary hover:text-primary hover:scale-[1.02]"
               >
                 <LogoGithub className="h-4 w-4" />
               </Link>
@@ -59,7 +59,7 @@ export default function Footer() {
               <Link
                 href="#"
                 aria-label="LinkedIn"
-                className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-outline-variant bg-white text-on-surface-variant transition-all duration-200 hover:border-primary hover:text-primary hover:scale-[1.02]"
+                className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-all duration-200 hover:border-primary hover:text-primary hover:scale-[1.02]"
               >
                 <LogoLinkedin className="h-4 w-4" />
               </Link>
