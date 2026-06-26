@@ -79,12 +79,18 @@ const MyProductsPage = () => {
 
   // Reset to page 1 whenever filters/search change
   useEffect(() => {
-    setCurrentPage(1);
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [search, category, condition]);
 
   // Fetch products from DB on filter change
   useEffect(() => {
-    fetchProducts();
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchProducts]);
 
   // 🗑️ [DELETE] - MongoDB থেকে পার্মানেন্টলি ডিলিট করার লজিক

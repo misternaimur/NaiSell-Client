@@ -117,7 +117,7 @@ const ManageOrdersPage = () => {
       case "Processing":
         return "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20";
       case "Shipped":
-        return "bg-purple-500/10 text-purple-400 border border-purple-500/20";
+        return "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20";
       case "Delivered":
         return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
       case "Rejected":
@@ -128,7 +128,7 @@ const ManageOrdersPage = () => {
   };
 
   return (
-    <div className="space-y-8 mt-6 pb-12 text-white max-w-6xl mx-auto px-4 sm:px-0">
+    <div className="space-y-8 mt-6 pb-12 text-on-background max-w-6xl mx-auto px-4 sm:px-0">
       <DashboardHeading
         title="Manage Orders"
         description="Track and process your incoming customer orders. Update order steps from processing through successful delivery."
@@ -246,7 +246,7 @@ const ManageOrdersPage = () => {
                           onClick={() =>
                             handleStatusUpdate(currentId, order.status, "NEXT")
                           }
-                          className="text-xs bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg text-white font-medium inline-flex items-center gap-1.5 transition-colors"
+                          className="text-xs bg-primary hover:bg-primary-container px-3 py-1.5 rounded-lg text-on-primary font-medium inline-flex items-center gap-1.5 transition-colors"
                         >
                           <FontAwesomeIcon icon={faTruck} className="w-3 h-3" />{" "}
                           Ship Package

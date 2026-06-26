@@ -158,28 +158,28 @@ const MyProducts = () => {
           ? [...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="h-32 animate-pulse bg-slate-900/40 border border-slate-800 rounded-2xl"
+                className="h-32 animate-pulse bg-surface-container/60 border border-outline-variant/60 rounded-2xl"
               />
             ))
           : cardItems.map((card, index) => (
               <div
                 key={index}
-                className={`relative overflow-hidden group p-5 bg-gradient-to-br ${card.bgGradient} bg-slate-900/40 backdrop-blur-md border border-slate-800 ${card.borderColor} rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
+                className="relative overflow-hidden group p-5 bg-surface-container border border-outline-variant/60 rounded-2xl shadow-sm transition-all duration-300 transform hover:-translate-y-1"
               >
                 <div className="flex justify-between items-start">
                   <div className="space-y-2">
-                    <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                    <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wider">
                       {card.title}
                     </p>
-                    <h3 className="text-2xl font-bold font-mono tracking-tight text-slate-100">
+                    <h3 className="text-2xl font-bold font-mono tracking-tight text-on-surface">
                       {card.value}
                     </h3>
                   </div>
-                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 group-hover:scale-110 transition-transform flex items-center justify-center w-11 h-11">
+                  <div className="p-3 bg-surface-container-high rounded-xl border border-outline-variant group-hover:scale-110 transition-transform flex items-center justify-center w-11 h-11">
                     {card.icon}
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-4 font-medium">
+                <p className="text-xs text-on-surface-variant/80 mt-4 font-medium">
                   {card.desc}
                 </p>
               </div>
@@ -187,17 +187,17 @@ const MyProducts = () => {
       </div>
 
       {/* 🛍️ ২. লাইভ প্রোডাক্ট লিস্ট টেবিল/গ্রিড সেকশন */}
-      <div className="bg-slate-900/20 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-md shadow-2xl">
-        <div className="p-6 border-b border-slate-800 bg-slate-900/40 flex justify-between items-center">
+      <div className="bg-surface-container border border-outline-variant/60 rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-6 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-bold text-slate-100">
+            <h3 className="text-xl font-bold text-on-surface">
               Products Inventory
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-on-surface-variant mt-1">
               List of all products uploaded by {sellerEmail}
             </p>
           </div>
-          <span className="px-3 py-1 bg-slate-800 text-xs font-semibold rounded-full text-cyan-400 border border-slate-700">
+          <span className="px-3 py-1 bg-primary/10 text-xs font-semibold rounded-full text-primary border border-primary/20">
             Total: {products.length} Items
           </span>
         </div>
@@ -207,19 +207,19 @@ const MyProducts = () => {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-16 animate-pulse bg-slate-800/40 rounded-xl"
+                className="h-16 animate-pulse bg-surface-container-high/40 rounded-xl"
               />
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 font-medium">
+          <div className="p-12 text-center text-on-surface-variant font-medium">
             No products found! Please add some products to see them here.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-950/40 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
+                <tr className="bg-surface-container-low text-on-surface-variant text-xs font-semibold uppercase tracking-wider border-b border-outline-variant">
                   <th className="p-4 pl-6">Product</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Condition</th>
@@ -229,46 +229,46 @@ const MyProducts = () => {
                   <th className="p-4 text-center pr-6">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-sm text-slate-300">
+              <tbody className="divide-y divide-outline-variant/40 text-sm text-on-surface">
                 {products.map((product) => (
                   <tr
                     key={product._id}
-                    className="hover:bg-slate-800/20 transition-colors"
+                    className="hover:bg-on-surface/5 transition-colors"
                   >
                     {/* প্রোডাক্ট ইমেজ ও টাইটেল */}
                     <td className="p-4 pl-6 flex items-center gap-4">
                       <img
                         src={product.image || "/placeholder-image.png"}
                         alt={product.title}
-                        className="w-12 h-12 object-cover rounded-lg bg-slate-800 border border-slate-700/60 shadow"
+                        className="w-12 h-12 object-cover rounded-lg bg-surface-container-high border border-outline-variant/60 shadow"
                       />
                       <div>
-                        <h4 className="font-semibold text-slate-200 line-clamp-1 max-w-[180px]">
+                        <h4 className="font-semibold text-on-surface line-clamp-1 max-w-[180px]">
                           {product.title}
                         </h4>
-                        <span className="text-[10px] text-slate-500 font-mono">
+                        <span className="text-[10px] text-on-surface-variant/80 font-mono">
                           ID: {product._id?.substring(0, 8)}...
                         </span>
                       </div>
                     </td>
 
                     {/* ক্যাটাগরি */}
-                    <td className="p-4 text-slate-400">{product.category}</td>
+                    <td className="p-4 text-on-surface-variant">{product.category}</td>
 
                     {/* কন্ডিশন */}
                     <td className="p-4">
-                      <span className="text-xs bg-slate-800 px-2 py-1 rounded border border-slate-700/50 text-slate-300">
+                      <span className="text-xs bg-surface-container px-2 py-1 rounded border border-outline-variant text-on-surface-variant">
                         {product.condition}
                       </span>
                     </td>
 
                     {/* প্রাইস */}
-                    <td className="p-4 font-mono font-semibold text-amber-400">
+                    <td className="p-4 font-mono font-semibold text-secondary">
                       ৳ {Number(product.price).toLocaleString()}
                     </td>
 
                     {/* স্টক */}
-                    <td className="p-4 font-mono text-slate-400">
+                    <td className="p-4 font-mono text-on-surface-variant">
                       {product.stock} pcs
                     </td>
 
@@ -277,10 +277,10 @@ const MyProducts = () => {
                       <span
                         className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${
                           product.status === "Approved"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            ? "bg-primary/10 text-primary border-primary/20"
                             : product.status === "Pending"
-                              ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                              : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                              ? "bg-secondary/10 text-secondary border-secondary/20"
+                              : "bg-error/10 text-error border-error/20"
                         }`}
                       >
                         {product.status || "Pending"}
@@ -292,7 +292,7 @@ const MyProducts = () => {
                       <div className="flex items-center justify-center gap-3">
                         <button
                           title="Edit Product"
-                          className="p-2 bg-slate-800 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-lg border border-slate-700 transition-all"
+                          className="p-2 bg-surface-container-high hover:bg-primary/20 hover:text-primary rounded-lg border border-outline-variant transition-all"
                         >
                           <FontAwesomeIcon
                             icon={faEdit}
@@ -302,7 +302,7 @@ const MyProducts = () => {
                         <button
                           title="Delete Product"
                           onClick={() => handleDelete(product._id)}
-                          className="p-2 bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 rounded-lg border border-slate-700 transition-all"
+                          className="p-2 bg-surface-container-high hover:bg-error/20 hover:text-error rounded-lg border border-outline-variant transition-all"
                         >
                           <FontAwesomeIcon
                             icon={faTrash}
