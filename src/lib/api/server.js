@@ -15,8 +15,30 @@ const buildFallbackResponse = (path, error) => ({
 const getAuthToken = () => {
   if (typeof window === "undefined") return null;
   try {
-    const session = JSON.parse(localStorage.getItem("better-auth.session") || "{}");
-    return session?.token || null;
+    // Better-Auth stores session token in a cookie named 'better-auth.session_token'
+    // or in localStorage under various keys depending on version
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+      const [key, value] = cookie.trim().split("=");
+      if (key === "better-auth.session_token") {
+        return decodeURIComponent(value);
+      }
+    }
+    // Fallback: try localStorage keys Better-Auth may use
+    const keys = ["better-auth.session_token", "better-auth.session", "auth.session"];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed?.token) return parsed.token;
+          if (typeof parsed === "string") return parsed;
+        } catch {
+          return raw;
+        }
+      }
+    }
+    return null;
   } catch {
     return null;
   }
@@ -27,6 +49,7 @@ export const serverMutation = async (path, method, data) => {
     const token = getAuthToken();
     const options = {
       method,
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -56,6 +79,7 @@ export const serverFetch = async (path) => {
     const token = getAuthToken();
     const res = await fetch(buildApiUrl(path), {
       cache: "no-store",
+      credentials: "include",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
