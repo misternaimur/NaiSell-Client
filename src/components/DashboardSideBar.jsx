@@ -149,69 +149,69 @@ const DashboardSideBar = () => {
   const menuItems =
     role === "admin" ? adminMenu : role === "seller" ? sellerMenu : role === "buyer" ? buyerMenu : [];
 
-  // ব্যাকগ্রাউন্ড থিম (আগের মতই রাখা হয়েছে)
+  // ব্যাকগ্রাউন্ড থিম (থিম ভেরিয়েবল অনুযায়ী আপডেট করা হয়েছে)
   const activeTheme =
     role === "admin"
-      ? "text-white bg-gradient-to-r from-amber-500/20 to-orange-500/10 border-amber-500/20"
+      ? "text-secondary bg-secondary/15 border-secondary/30"
       : role === "seller"
-        ? "text-white bg-gradient-to-r from-teal-500/20 to-cyan-500/10 border-teal-500/20"
-        : "text-white bg-gradient-to-r from-emerald-500/20 to-teal-500/10 border-emerald-500/20";
+        ? "text-primary bg-primary/15 border-primary/30"
+        : "text-primary bg-primary/15 border-primary/30";
 
   // আইকন ব্যাকগ্রাউন্ড থিম
   const activeIconTheme =
     role === "admin"
-      ? "bg-amber-500 text-white"
+      ? "bg-secondary text-on-secondary"
       : role === "seller"
-        ? "bg-teal-500 text-white"
-        : "bg-emerald-500 text-white";
+        ? "bg-primary text-on-primary"
+        : "bg-primary text-on-primary";
 
   // ইন্ডিকেটর ডট কালার
   const activeDotTheme =
     role === "admin"
-      ? "bg-amber-400"
+      ? "bg-secondary"
       : role === "seller"
-        ? "bg-teal-400"
-        : "bg-emerald-400";
+        ? "bg-primary"
+        : "bg-primary";
 
   // ব্যাজ কালার
   const roleBadgeColor =
     role === "admin"
-      ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
+      ? "text-secondary bg-secondary/10 border-secondary/20"
       : role === "seller"
-        ? "text-teal-400 bg-teal-500/10 border-teal-500/20"
-        : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+        ? "text-primary bg-primary/10 border-primary/20"
+        : "text-primary bg-primary/10 border-primary/20";
 
   return (
-    <aside className="w-64 h-screen border-r border-slate-800 shrink-0 sticky top-0">
-      <div className="h-full flex flex-col bg-slate-950">
+    <aside className="w-64 h-screen border-r border-outline-variant shrink-0 sticky top-0">
+      <div className="h-full flex flex-col bg-surface-container-low">
         {/* Brand / Title */}
-        <div className="px-6 py-5 border-b border-slate-900 flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-sm font-black">
+        <div className="px-6 py-5 border-b border-outline-variant/60 flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center text-on-primary text-sm font-black">
             N
           </div>
-          <span className="font-black text-lg tracking-tight text-white">
-            NaiSell <span className="text-emerald-500">Hub</span>
+          <span className="font-black text-lg tracking-tight text-on-surface">
+            NaiSell <span className="text-primary">Hub</span>
           </span>
         </div>
 
         {/* User Profile Section */}
-        <div className="px-5 py-4 border-b border-slate-900">
-          <div className="flex items-center gap-3 bg-slate-900/40 p-2 rounded-xl border border-slate-900">
+        <div className="px-5 py-4 border-b border-outline-variant/60">
+          <div className="flex items-center gap-3 bg-surface-container-high/40 p-2 rounded-xl border border-outline-variant/40">
             {session?.user?.image ? (
               <Image
                 src={session.user.image}
                 alt="Profile"
                 width={36}
                 height={36}
-                className="rounded-lg object-cover border border-slate-800"
+                className="rounded-lg object-cover border border-outline-variant"
               />
             ) : (
-              <div className="h-9 w-9 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 text-sm font-bold border border-slate-700">
+              <div className="h-9 w-9 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant text-sm font-bold border border-outline-variant">
                 {session?.user?.name ? session.user.name[0].toUpperCase() : "U"}
               </div>
             )}
             <div className="overflow-hidden grow">
-              <p className="text-slate-200 text-sm font-bold truncate leading-tight">
+              <p className="text-on-surface text-sm font-bold truncate leading-tight">
                 {isPending
                   ? "Loading..."
                   : session?.user?.name || "Anonymous User"}
@@ -227,7 +227,7 @@ const DashboardSideBar = () => {
 
         {/* Dynamic Navigation Menu */}
         <nav className="grow overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-3 pb-2">
+          <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest px-3 pb-2">
             {role} Menu
           </p>
           {menuItems?.map(({ key, label, icon: Icon, href }) => {
@@ -244,12 +244,12 @@ const DashboardSideBar = () => {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                   isActive
                     ? activeTheme
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 border border-transparent"
+                    : "text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 border border-transparent"
                 }`}
               >
                 <span
                   className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                    isActive ? activeIconTheme : "bg-slate-900 text-slate-400"
+                    isActive ? activeIconTheme : "bg-surface-container-high text-on-surface-variant"
                   }`}
                 >
                   <Icon size={14} />
@@ -267,21 +267,21 @@ const DashboardSideBar = () => {
         </nav>
 
         {/* Bottom Links (Home & Sign Out) */}
-        <div className="px-3 py-4 border-t border-slate-900 space-y-1">
+        <div className="px-3 py-4 border-t border-outline-variant/60 space-y-1">
           <Link
             href="/"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-900/40 border border-transparent transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 border border-transparent transition-all duration-150"
           >
-            <span className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center shrink-0 text-slate-400">
+            <span className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center shrink-0 text-on-surface-variant">
               <FaHome size={13} />
             </span>
             Back to Site
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 hover:bg-red-500/5 border border-transparent transition-all duration-150 cursor-pointer"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold text-on-surface-variant hover:text-error hover:bg-error/5 border border-transparent transition-all duration-150 cursor-pointer"
           >
-            <span className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center shrink-0 text-slate-400">
+            <span className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center shrink-0 text-on-surface-variant">
               <FaSignOutAlt size={13} />
             </span>
             Sign Out

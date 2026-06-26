@@ -84,7 +84,7 @@ export default function RegisterForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12 font-sans">
-      <Card className="w-full max-w-md rounded-2xl border border-outline-variant bg-white p-8 shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+      <Card className="w-full max-w-md rounded-2xl border border-outline-variant bg-surface-container-lowest p-8 shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
         <div className="flex flex-col items-center gap-1.5 pb-6 text-center">
           <h1 className="font-display text-2xl font-bold tracking-tight text-on-surface">
             Create an Account
@@ -248,7 +248,7 @@ export default function RegisterForm() {
                       <Select.Indicator className="ml-auto text-outline" />
                     </Select.Trigger>
 
-                    <Select.Popover className="border border-outline-variant bg-white rounded-lg shadow-xl p-1 text-on-surface">
+                    <Select.Popover className="border border-outline-variant bg-surface-container-lowest rounded-lg shadow-xl p-1 text-on-surface">
                       <ListBox>
                         <ListBox.Item
                           id="buyer"
@@ -280,7 +280,7 @@ export default function RegisterForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 w-full bg-primary hover:bg-primary-container text-white font-semibold py-2.5 rounded-[8px] active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed font-sans"
+              className="mt-2 w-full bg-primary hover:bg-primary-container text-on-primary font-semibold py-2.5 rounded-[8px] active:scale-[0.98] transition-all text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed font-sans"
             >
               <FontAwesomeIcon icon={faCheck} />
               {isSubmitting ? "Registering..." : "Register"}
@@ -300,7 +300,7 @@ export default function RegisterForm() {
               type="button"
               variant="bordered"
               aria-label="Sign up with Google"
-              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium py-2.5 rounded-[8px] bg-white hover:bg-surface-container-low transition-all text-sm flex items-center justify-center gap-2.5 font-sans"
+              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium py-2.5 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all text-sm flex items-center justify-center gap-2.5 font-sans"
             >
               <FontAwesomeIcon
                 icon={faGoogle}

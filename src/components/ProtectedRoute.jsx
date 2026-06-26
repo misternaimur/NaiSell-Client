@@ -21,8 +21,8 @@ export default function ProtectedRoute({
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080c18] text-white">
-        <span className="h-10 w-10 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-background text-on-background">
+        <span className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }

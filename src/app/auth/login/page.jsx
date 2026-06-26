@@ -121,7 +121,7 @@ export default function SigninPage() {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-md"
       >
-        <Card className="w-full p-6 sm:p-8 bg-white border border-outline-variant/40 shadow-[0_4px_16px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+        <Card className="w-full p-6 sm:p-8 bg-surface-container-lowest border border-outline-variant/40 shadow-[0_4px_16px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
           {/* Header */}
           <div className="flex flex-col items-center justify-center gap-1.5 pb-6 text-center">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-on-surface font-display">
@@ -142,7 +142,7 @@ export default function SigninPage() {
               onClick={handleGoogleSignin}
               type="button"
               variant="bordered"
-              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-white hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
+              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
             >
               <FontAwesomeIcon
                 icon={faGoogle}
@@ -249,7 +249,7 @@ export default function SigninPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-container text-white font-semibold rounded-[8px] text-sm h-12 shadow-sm transition-all duration-300 mt-2 flex items-center justify-center gap-2"
+              className="w-full bg-primary hover:bg-primary-container text-on-primary font-semibold rounded-[8px] text-sm h-12 shadow-sm transition-all duration-300 mt-2 flex items-center justify-center gap-2"
               isLoading={isLoading}
               isDisabled={isLoading}
             >

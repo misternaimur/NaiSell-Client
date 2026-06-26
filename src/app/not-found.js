@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Custom404() {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 py-12 select-none">
+    <div className="min-h-screen bg-background text-on-background flex flex-col items-center justify-center px-6 py-12 select-none">
       <div className="text-center max-w-lg w-full">
         {/* --- Attractive Illustration (CSS & SVG) --- */}
         <div className="relative w-full h-64 flex items-center justify-center mb-8 animate-pulse">
@@ -24,7 +24,7 @@ export default function Custom404() {
             <div className="absolute top-0 left-4 text-amber-400 text-xl animate-spin [animation-duration:10s]">
               <i className="fas fa-star"></i>
             </div>
-            <div className="absolute bottom-4 right-4 text-purple-400 text-2xl animate-bounce [animation-duration:3s]">
+            <div className="absolute bottom-4 right-4 text-secondary text-2xl animate-bounce [animation-duration:3s]">
               <i className="fas fa-ghost"></i>
             </div>
           </div>

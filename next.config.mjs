@@ -2,6 +2,7 @@
 const nextConfig = {
   /* config options here */
   reactCompiler: true,
+  transpilePackages: ["@gravity-ui/icons"],
   images: {
     remotePatterns: [
       {

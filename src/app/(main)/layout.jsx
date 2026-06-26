@@ -6,7 +6,7 @@ export default function RootLayout({ children }) {
   return (
     <>
         <Navbar />
-       <div className="flex flex-col min-h-screen bg-[#f1f5f0] font-sans dark:bg-black">
+       <div className="flex flex-col min-h-screen bg-surface-container-low text-on-surface font-sans">
           {children}
         </div>
         <Footer />
