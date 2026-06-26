@@ -1,41 +1,50 @@
 import { auth } from "@/lib/auth";
-import { MongoClient } from "mongodb";
+
+let cachedClient = null;
+let cachedDb = null;
+
+async function getDb() {
+  if (cachedDb) return cachedDb;
+  const { MongoClient } = await import("mongodb");
+  const client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  cachedClient = client;
+  cachedDb = client.db(process.env.DB_NAME || "NaiSellDB");
+  return cachedDb;
+}
 
 export async function POST(request) {
   try {
     const { email, password, name, role } = await request.json();
 
-    const client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
-    const db = client.db(process.env.DB_NAME);
+    const db = await getDb();
+    const usersCollection = db.collection("user");
 
     // Check if user already exists
-    const existingUser = await db.collection("user").findOne({ email });
+    const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
       if (role) {
-        await db.collection("user").updateOne(
-          { _id: existingUser._id },
+        await usersCollection.updateOne(
+          { email },
           { $set: { role } }
         );
       }
-      await client.close();
-      return Response.json({ message: "User already exists", userId: existingUser._id });
+      return Response.json({ message: "User already exists", userId: existingUser._id.toString() });
     }
 
     // Create user through Better-Auth
     const result = await auth.api.signUpEmail({
-      body: { email, password, name, role },
+      body: { email, password, name, role: role || "buyer" },
     });
 
     // Update role if specified
     if (role && result.user) {
-      await db.collection("user").updateOne(
-        { _id: result.user.id },
+      await usersCollection.updateOne(
+        { email },
         { $set: { role } }
       );
     }
 
-    await client.close();
     return Response.json({ message: "User created", user: result.user });
   } catch (error) {
     console.error("Seed error:", error);

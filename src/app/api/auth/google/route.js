@@ -1,11 +1,16 @@
 import { auth } from "@/lib/auth";
 import { MongoClient } from "mongodb";
 
-// A deterministic "password" derived from the user's email so we can sign them
-// back in via Better-Auth's email+password flow (which sets the proper session cookie)
-function deriveGooglePassword(email) {
-  // Simple deterministic password — never exposed to users
-  return `G@${Buffer.from(email).toString("base64").slice(0, 16)}#Nx9`;
+let cachedClient = null;
+let cachedDb = null;
+
+async function getDb() {
+  if (cachedDb) return cachedDb;
+  const client = new MongoClient(process.env.MONGODB_URI);
+  await client.connect();
+  cachedClient = client;
+  cachedDb = client.db(process.env.DB_NAME || "NaiSellDB");
+  return cachedDb;
 }
 
 export async function POST(request) {
@@ -16,51 +21,74 @@ export async function POST(request) {
       return Response.json({ error: "Email is required" }, { status: 400 });
     }
 
-    const mongoClient = new MongoClient(process.env.MONGODB_URI);
-    await mongoClient.connect();
-    const db = mongoClient.db(process.env.DB_NAME);
+    const db = await getDb();
+    const usersCollection = db.collection("user");
 
-    // Check if user already exists
-    const existingUser = await db.collection("user").findOne({ email });
+    // Check if user exists
+    let user = await usersCollection.findOne({ email });
 
-    const password = deriveGooglePassword(email);
-
-    if (!existingUser) {
-      // Create new user via Better-Auth with a deterministic password
+    if (!user) {
+      // Create new user via Better-Auth
       const result = await auth.api.signUpEmail({
         body: {
           email,
-          password,
+          password: Math.random().toString(36).slice(-12) + "A1!",
           name: name || email.split("@")[0],
-          role: "buyer",
         },
       });
 
-      // Update with image from Google
-      if (result?.user) {
-        await db.collection("user").updateOne(
+      // Update with image and role
+      if (result.user) {
+        // The Better-Auth user id might be stored differently
+        const userId = result.user.id;
+        await usersCollection.updateOne(
+          { _id: userId },
+          { $set: { image: image || "", role: "buyer" } }
+        );
+
+        // Also update by email as fallback
+        await usersCollection.updateOne(
           { email },
           { $set: { image: image || "", role: "buyer" } }
         );
-      }
-    } else {
-      // Update image if changed
-      if (image && existingUser.image !== image) {
-        await db.collection("user").updateOne(
-          { email },
-          { $set: { image } }
-        );
+
+        user = { id: userId, email, name, image, role: "buyer" };
       }
     }
 
-    await mongoClient.close();
+    if (!user) {
+      return Response.json({ error: "Failed to create or find user" }, { status: 500 });
+    }
 
-    // Return the deterministic password so the client can sign in via Better-Auth
-    // to get a proper session cookie
+    // Ensure user.id is set
+    if (!user.id) {
+      user.id = user._id?.toString();
+    }
+
+    // Generate a session token using MongoDB ObjectId for uniqueness
+    const { ObjectId } = await import("mongodb");
+    const sessionId = new ObjectId().toString();
+    const userId = user.id || user._id?.toString();
+
+    // Store session in Better-Auth's session collection
+    const sessionsCollection = db.collection("session");
+    await sessionsCollection.insertOne({
+      id: sessionId,
+      sessionToken: sessionId,
+      userId: userId,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+    });
+
     return Response.json({
       success: true,
-      password,
-      role: existingUser?.role || "buyer",
+      user: {
+        id: userId,
+        email: user.email || email,
+        name: user.name || name,
+        role: user.role || "buyer",
+      },
+      sessionToken: sessionId,
     });
   } catch (error) {
     console.error("Google auth error:", error);

@@ -66,7 +66,7 @@ export default function SigninPage() {
             });
             reset();
             setTimeout(() => {
-              window.location.href = "/";
+              window.location.href = "/dashboard";
             }, 1500);
           },
           onError: (ctx) => {

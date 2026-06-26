@@ -1,5 +1,9 @@
 import { baseURL } from "./baseUrl";
 
+// Cache the JWT token after exchange
+let cachedJwt = null;
+let jwtFetchPromise = null;
+
 const buildApiUrl = (path) => {
   const normalizedPath = path?.replace(/^\/+/, "");
   return `${baseURL}/${normalizedPath}`;
@@ -12,30 +16,19 @@ const buildFallbackResponse = (path, error) => ({
   error: error?.message || "Unknown error",
 });
 
-const getAuthToken = () => {
+/**
+ * Get the Better-Auth session token from cookies.
+ */
+const getSessionToken = () => {
   if (typeof window === "undefined") return null;
   try {
-    // Better-Auth stores session token in a cookie named 'better-auth.session_token'
-    // or in localStorage under various keys depending on version
+    // Better-Auth stores session token in a cookie
     const cookies = document.cookie.split(";");
     for (const cookie of cookies) {
       const [key, value] = cookie.trim().split("=");
-      if (key === "better-auth.session_token") {
+      // Check various possible cookie names
+      if (key === "better-auth.session_token" || key === "session_token") {
         return decodeURIComponent(value);
-      }
-    }
-    // Fallback: try localStorage keys Better-Auth may use
-    const keys = ["better-auth.session_token", "better-auth.session", "auth.session"];
-    for (const key of keys) {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed?.token) return parsed.token;
-          if (typeof parsed === "string") return parsed;
-        } catch {
-          return raw;
-        }
       }
     }
     return null;
@@ -44,9 +37,65 @@ const getAuthToken = () => {
   }
 };
 
+/**
+ * Exchange a Better-Auth session token for a JWT by calling the server.
+ */
+const exchangeToken = async (sessionToken) => {
+  try {
+    const res = await fetch(buildApiUrl("api/auth/token"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionToken }),
+    });
+
+    if (!res.ok) {
+      cachedJwt = null;
+      return null;
+    }
+
+    const data = await res.json();
+    if (data.success && data.token) {
+      cachedJwt = data.token;
+      return data.token;
+    }
+    return null;
+  } catch (error) {
+    console.warn("Token exchange failed:", error);
+    cachedJwt = null;
+    return null;
+  }
+};
+
+/**
+ * Get a valid JWT token, exchanging from session if needed.
+ * Uses a promise cache to avoid concurrent duplicate exchanges.
+ */
+const getJwtToken = async () => {
+  if (cachedJwt) return cachedJwt;
+
+  const sessionToken = getSessionToken();
+  if (!sessionToken) return null;
+
+  // Deduplicate concurrent exchange requests
+  if (!jwtFetchPromise) {
+    jwtFetchPromise = exchangeToken(sessionToken).finally(() => {
+      jwtFetchPromise = null;
+    });
+  }
+
+  return jwtFetchPromise;
+};
+
+/**
+ * Clear the cached JWT (useful on logout/signout).
+ */
+export const clearAuthToken = () => {
+  cachedJwt = null;
+};
+
 export const serverMutation = async (path, method, data) => {
   try {
-    const token = getAuthToken();
+    const token = await getJwtToken();
     const options = {
       method,
       credentials: "include",
@@ -64,6 +113,10 @@ export const serverMutation = async (path, method, data) => {
 
     if (!res.ok) {
       const errorText = await res.text();
+      // If 401, clear cached JWT so it gets re-fetched next time
+      if (res.status === 401) {
+        cachedJwt = null;
+      }
       return { success: false, message: errorText || "Request failed" };
     }
 
@@ -76,7 +129,7 @@ export const serverMutation = async (path, method, data) => {
 
 export const serverFetch = async (path) => {
   try {
-    const token = getAuthToken();
+    const token = await getJwtToken();
     const res = await fetch(buildApiUrl(path), {
       cache: "no-store",
       credentials: "include",
@@ -87,6 +140,9 @@ export const serverFetch = async (path) => {
 
     if (!res.ok) {
       const errorText = await res.text();
+      if (res.status === 401) {
+        cachedJwt = null;
+      }
       return { success: false, message: errorText || "Request failed" };
     }
 
