@@ -23,7 +23,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { authClient } from "../../../lib/auth-client";
-import { signInWithGoogle } from "../../../lib/firebase";
 import { toast } from "react-toastify";
 
 export default function SigninPage() {
@@ -127,15 +126,10 @@ export default function SigninPage() {
               onClick={async () => {
                 const toastId = toast.loading("Connecting to Google...");
                 try {
-                  const result = await signInWithGoogle();
-                  if (result.success) {
-                    toast.update(toastId, { render: "Logged in with Google!", type: "success", isLoading: false, autoClose: 1500 });
-                    // Set session cookie and redirect
-                    document.cookie = `better-auth.session_token=${result.sessionToken}; path=/; max-age=${7 * 24 * 60 * 60}`;
-                    setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
-                  } else {
-                    throw new Error(result.error);
-                  }
+                  await authClient.signIn.social({
+                    provider: "google",
+                    callbackURL: "/dashboard",
+                  });
                 } catch (err) {
                   console.error("Google login error:", err);
                   toast.update(toastId, { render: err.message || "Google login failed", type: "error", isLoading: false, autoClose: 3000 });
