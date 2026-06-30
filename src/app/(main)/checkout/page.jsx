@@ -33,7 +33,9 @@ function CheckoutContent() {
 
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/products/${productId}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL }/api/products/${productId}`,
+        );
         if (!res.ok) throw new Error("Product not found");
         const data = await res.json();
         setProduct(data);
@@ -167,7 +169,7 @@ function CheckoutContent() {
           <Button
             onClick={handleCheckout}
             disabled={processing}
-            className="w-full bg-primary text-on-primary font-semibold h-12 rounded-[8px] shadow-sm hover:bg-primary/95 transition-all font-sans"
+            className="w-full bg-primary text-on-primary font-semibold h-12 rounded-2xl shadow-sm hover:bg-primary/95 transition-all font-sans"
           >
             {processing ? (
               <span className="flex items-center gap-2">

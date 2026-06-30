@@ -53,7 +53,7 @@ export default function AllProductsPage() {
         if (search) params.set("search", search);
         if (category) params.set("category", category);
         if (condition) params.set("condition", condition);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/products?${params}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?${params}`);
         const data = await res.json();
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {

@@ -14,19 +14,16 @@ const db = client.db(process.env.DB_NAME || "nai_sell_db");
 
 export const auth = betterAuth({
   database: mongodbAdapter(db),
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  trustedOrigins: [
-    "http://localhost:3000",
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  ],
+  baseURL: process.env.BETTER_AUTH_URL,
+  trustedOrigins: ["http://localhost:3000", "https://nai-sell.vercel.app"],
   secret: process.env.BETTER_AUTH_SECRET,
   emailAndPassword: {
     enabled: true,
   },
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     },
   },
   user: {
