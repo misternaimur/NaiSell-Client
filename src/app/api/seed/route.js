@@ -9,7 +9,7 @@ async function getDb() {
   const client = new MongoClient(process.env.MONGODB_URI);
   await client.connect();
   cachedClient = client;
-  cachedDb = client.db(process.env.DB_NAME || "NaiSellDB");
+  cachedDb = client.db(process.env.DB_NAME || "nai_sell_db");
   return cachedDb;
 }
 
