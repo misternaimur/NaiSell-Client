@@ -127,7 +127,7 @@ export default function Navbar() {
                   </div>
 
                   <Link
-                    href="/dashboard"
+                    href={`/dashboard/${session?.user?.role}`}
                     onClick={() => setDropdownOpen(false)}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition cursor-pointer font-sans"
                   >
