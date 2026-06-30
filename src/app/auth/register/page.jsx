@@ -1,3 +1,5 @@
+/** @format */
+
 "use client";
 
 import React from "react";
@@ -22,6 +24,7 @@ import {
   faUserTag,
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
+import { faGoogle } from "@fortawesome/free-brands-svg-icons"; // ফিক্স: গুগলের ব্র্যান্ড আইকন ইমপোর্ট করা হয়েছে
 import { authClient } from "../../../lib/auth-client";
 import { toast } from "react-toastify";
 
@@ -85,14 +88,43 @@ export default function RegisterForm() {
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12 font-sans">
       <Card className="w-full max-w-md rounded-2xl border border-outline-variant bg-surface-container-lowest p-8 shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
         <div className="flex flex-col items-center gap-1.5 pb-6 text-center">
-          <h1 className="font-display text-2xl font-bold tracking-tight text-on-surface">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-on-surface mt-4">
             Create an Account
           </h1>
           <p className="text-sm text-on-surface-variant font-sans">
             Join NaiSell Hub curated marketplace
           </p>
         </div>
-
+<div className="w-full">
+            <Button
+              type="button"
+              variant="bordered"
+              onClick={async () => {
+                const toastId = toast.loading("Connecting to Google...");
+                try {
+                  await authClient.signIn.social({
+                    provider: "google",
+                    callbackURL: "/dashboard",
+                  });
+                } catch (err) {
+                  console.error("Google login error:", err);
+                  toast.update(toastId, {
+                    render: err.message || "Google login failed",
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 3000,
+                  });
+                }
+              }}
+              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
+            >
+              <FontAwesomeIcon
+                icon={faGoogle}
+                className="text-base text-primary"
+              />
+              Log in with Google
+            </Button>
+          </div>
         <div>
           <Form
             onSubmit={handleSubmit(onSubmit)}
@@ -289,5 +321,4 @@ export default function RegisterForm() {
       </Card>
     </div>
   );
-}  
-
+}
