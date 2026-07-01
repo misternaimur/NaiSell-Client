@@ -1,14 +1,17 @@
+/** @format */
 import { baseURL } from "./baseUrl";
 
-// Cache the JWT token after exchange
+// Cache the backend JWT for the current browser session.
 let cachedJwt = null;
 let jwtFetchPromise = null;
 
+// Create full API URL
 const buildApiUrl = (path) => {
   const normalizedPath = path?.replace(/^\/+/, "");
   return `${baseURL}/${normalizedPath}`;
 };
 
+// Standard fallback response for network/server errors
 const buildFallbackResponse = (path, error) => ({
   success: false,
   message: "Unable to connect to the server right now. Please try again later.",
@@ -16,36 +19,19 @@ const buildFallbackResponse = (path, error) => ({
   error: error?.message || "Unknown error",
 });
 
-/**
- * Get the Better-Auth session token from cookies.
- */
-const getSessionToken = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    // Better-Auth stores session token in a cookie
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-      const [key, value] = cookie.trim().split("=");
-      // Check various possible cookie names
-      if (key === "better-auth.session_token" || key === "session_token") {
-        return decodeURIComponent(value);
-      }
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
+const isProtectedAuthPath = (path) =>
+  /^api\/(admin|buyer|seller|orders|products|wishlist|users|payments|reviews)(\/|\?|$)/.test(
+    path?.replace(/^\/+/, ""),
+  );
 
 /**
- * Exchange a Better-Auth session token for a JWT by calling the server.
+ * Exchange session token for JWT.
  */
-const exchangeToken = async (sessionToken) => {
+const exchangeToken = async () => {
   try {
-    const res = await fetch(buildApiUrl("api/auth/token"), {
+    const res = await fetch("/api/auth/token", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionToken }),
+      credentials: "include",
     });
 
     if (!res.ok) {
@@ -54,10 +40,12 @@ const exchangeToken = async (sessionToken) => {
     }
 
     const data = await res.json();
+
     if (data.success && data.token) {
       cachedJwt = data.token;
       return data.token;
     }
+
     return null;
   } catch (error) {
     console.warn("Token exchange failed:", error);
@@ -67,18 +55,21 @@ const exchangeToken = async (sessionToken) => {
 };
 
 /**
- * Get a valid JWT token, exchanging from session if needed.
- * Uses a promise cache to avoid concurrent duplicate exchanges.
+ * Return cached JWT if available.
+ * Otherwise exchange the session token only once.
  */
-const getJwtToken = async () => {
-  if (cachedJwt) return cachedJwt;
+const getJwtToken = async ({ forceRefresh = false } = {}) => {
+  if (!forceRefresh && cachedJwt) {
+    return cachedJwt;
+  }
 
-  const sessionToken = getSessionToken();
-  if (!sessionToken) return null;
+  if (forceRefresh) {
+    cachedJwt = null;
+  }
 
-  // Deduplicate concurrent exchange requests
+  // Prevent multiple simultaneous token exchange requests
   if (!jwtFetchPromise) {
-    jwtFetchPromise = exchangeToken(sessionToken).finally(() => {
+    jwtFetchPromise = exchangeToken().finally(() => {
       jwtFetchPromise = null;
     });
   }
@@ -87,37 +78,75 @@ const getJwtToken = async () => {
 };
 
 /**
- * Clear the cached JWT (useful on logout/signout).
+ * Clear cached JWT after logout or token expiration.
  */
 export const clearAuthToken = () => {
   cachedJwt = null;
 };
 
+export const primeBackendToken = async () => {
+  return getJwtToken({ forceRefresh: true });
+};
+
+export const getAuthHeaders = async () => {
+  const token = await getJwtToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const executeRequest = async (path, options, allowRetry = true) => {
+  const res = await fetch(buildApiUrl(path), options);
+
+  if (res.status !== 401 || !allowRetry || !isProtectedAuthPath(path)) {
+    return res;
+  }
+
+  clearAuthToken();
+  const refreshedToken = await getJwtToken({ forceRefresh: true });
+  if (!refreshedToken) return res;
+
+  const retryOptions = {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${refreshedToken}`,
+    },
+  };
+
+  return fetch(buildApiUrl(path), retryOptions);
+};
+
 export const serverMutation = async (path, method, data) => {
   try {
-    const token = await getJwtToken();
+    const authHeaders = await getAuthHeaders();
+
     const options = {
       method,
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...authHeaders,
       },
     };
 
+    // Attach request body for write operations
     if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
       options.body = JSON.stringify(data);
     }
 
-    const res = await fetch(buildApiUrl(path), options);
+    const res = await executeRequest(path, options);
 
     if (!res.ok) {
       const errorText = await res.text();
-      // If 401, clear cached JWT so it gets re-fetched next time
+
+      // Clear cached token if authentication fails
       if (res.status === 401) {
-        cachedJwt = null;
+        clearAuthToken();
       }
-      return { success: false, message: errorText || "Request failed" };
+
+      return {
+        success: false,
+        message: errorText || "Request failed",
+      };
     }
 
     return await res.json().catch(() => ({}));
@@ -129,21 +158,28 @@ export const serverMutation = async (path, method, data) => {
 
 export const serverFetch = async (path) => {
   try {
-    const token = await getJwtToken();
-    const res = await fetch(buildApiUrl(path), {
+    const authHeaders = await getAuthHeaders();
+
+    const res = await executeRequest(path, {
       cache: "no-store",
       credentials: "include",
       headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...authHeaders,
       },
     });
 
     if (!res.ok) {
       const errorText = await res.text();
+
+      // Clear cached token if authentication fails
       if (res.status === 401) {
-        cachedJwt = null;
+        clearAuthToken();
       }
-      return { success: false, message: errorText || "Request failed" };
+
+      return {
+        success: false,
+        message: errorText || "Request failed",
+      };
     }
 
     return await res.json().catch(() => ({}));
@@ -154,8 +190,18 @@ export const serverFetch = async (path) => {
 };
 
 export const getSellerStats = async (email) => {
+  // Return default values when email is missing
   if (!email) {
-    return { success: false, stats: { totalProducts: 0, totalSales: 0, totalRevenue: 0, pendingOrders: 0 } };
+    return {
+      success: false,
+      stats: {
+        totalProducts: 0,
+        totalSales: 0,
+        totalRevenue: 0,
+        pendingOrders: 0,
+      },
+    };
   }
+
   return await serverFetch(`api/seller/stats/${email}`);
 };

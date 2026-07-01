@@ -5,11 +5,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
 import Image from "next/image";
 import DashboardHeading from "@/components/DashboardHeading";
-import {
-  getSellerProducts,
-  deleteProduct,
-  updateProduct,
-} from "@/lib/api/sellerActions";
 import { Magnifier, TrashBin, Pencil, Hashtag, Xmark } from "@gravity-ui/icons";
 
 const MyProductsPage = () => {
@@ -37,63 +32,81 @@ const MyProductsPage = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(false);
 
-  // ফিল্টার অপশনস (এগুলো ডাটাবেজ কোয়েরি প্যারামস হিসেবে পাস হবে)
+  // এপিআই ডেটা অনুযায়ী অপশনস
   const categories = [
     "Electronics",
     "Gadgets",
     "Fashion",
     "Home Appliances",
     "Automobiles",
+    "Vehicles",
+    "Furniture",
   ];
-  const conditions = ["Used", "Like New", "Refurbished"];
+  const conditions = ["Used", "Like New", "Refurbished", "Good", "Pristine"];
 
-  // 🔄 [READ] - সরাসরি ডাটাবেজ থেকে লাইভ ডেটা ফেচ করা
-
-
+  // 🔄 [READ] - সরাসরি আপনার লোকালহোস্ট API থেকে ডেটা ফেচ করা
   const fetchProducts = useCallback(async () => {
+    if (!sellerEmail) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
-      // directly query live database with search, category, and condition filters
-      const res = await getSellerProducts({
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+      const queryParams = new URLSearchParams({
         email: sellerEmail,
         search: search.trim(),
         category,
         condition,
       });
 
-      if (res && Array.isArray(res)) {
-        setProducts(res);
-      } else if (res && Array.isArray(res.products)) {
-        setProducts(res.products);
-      } else if (res && Array.isArray(res.result)) {
-        setProducts(res.result);
-      } else {
-        setProducts([]);
+      const response = await fetch(`${baseUrl}/api/products?${queryParams}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch products from server");
       }
+
+      const res = await response.json();
+
+      // 💡 ফিক্স: ডাটা সেট করার সময় রেন্ডার সাইকেলের বাইরে পাঠানো হলো
+      setTimeout(() => {
+        if (res && Array.isArray(res)) {
+          setProducts(res);
+        } else if (res && Array.isArray(res.products)) {
+          setProducts(res.products);
+        } else {
+          setProducts([]);
+        }
+      }, 0);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching products from API:", error);
     } finally {
-      setLoading(false);
+      // 💡 ফিক্স: লোডিং স্টেটকেও নিরাপদ উপায়ে ফলস করা হলো
+      setTimeout(() => setLoading(false), 0);
     }
   }, [sellerEmail, search, category, condition]);
 
-  // Reset to page 1 whenever filters/search change
+  // 💡 ১০০% লিন্টার সেফ ইফেক্ট ব্লক:
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentPage(1);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [search, category, condition]);
+    let isMounted = true;
 
-  // Fetch products from DB on filter change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProducts();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [fetchProducts]);
+    if (isMounted) {
+      // ক্যাসকেডিং রেন্ডার এড়াতে সম্পূর্ণ প্রসেসটিকে মাইক্রো-টাস্কে পুশ করা হলো
+      setTimeout(() => {
+        setCurrentPage(1);
+        setLoading(true); // ডেটা লোড হওয়ার আগে লোডিং শুরু
+        fetchProducts();
+      }, 0);
+    }
 
-  // 🗑️ [DELETE] - MongoDB থেকে পার্মানেন্টলি ডিলিট করার লজিক
+    return () => {
+      isMounted = false;
+    };
+  }, [search, category, condition, fetchProducts]);
+
+  // 🗑️ [DELETE] - API-তে ডিলিট রিকোয়েস্ট পাঠানো
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this product permanently from the database?",
@@ -101,22 +114,25 @@ const MyProductsPage = () => {
     if (!confirmDelete) return;
 
     try {
-      const res = await deleteProduct(id);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const response = await fetch(`${baseUrl}/api/products/${id}`, {
+        method: "DELETE",
+      });
 
-      if (res && (res.success || res.result?.deletedCount > 0)) {
-        alert("🎉 Product deleted successfully from database!");
-        // রিফ্রেশ ছাড়া লাইভ UI স্টেট আপডেট করা
+      if (response.ok) {
+        alert("🎉 Product deleted successfully!");
         setProducts((prev) => prev.filter((product) => product._id !== id));
       } else {
-        alert(`❌ Failed to delete: ${res?.message || "Unknown error"}`);
+        alert("❌ Failed to delete product from server.");
       }
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("❌ Operation failed. Could not connect to database.");
+      alert("❌ Operation failed. Could not connect to API.");
     }
   };
 
-  // 📝 [UPDATE] - মোডাল ওপেন ও ডেটা বাইন্ডিং
+  // 📝 [UPDATE] - মোডাল ওপেন
   const openEditModal = (product) => {
     setEditingProduct({ ...product });
     setIsEditModalOpen(true);
@@ -127,12 +143,15 @@ const MyProductsPage = () => {
     setEditingProduct((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🚀 [UPDATE] - ডাটাবেজে এডিটেড তথ্য সেভ করা
+  // 🚀 [UPDATE] - API-তে এডিটেড ডেটা পুশ করা
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     setUpdateLoading(true);
 
     try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
       const payload = {
         title: editingProduct.title,
         description: editingProduct.description,
@@ -140,30 +159,31 @@ const MyProductsPage = () => {
         condition: editingProduct.condition,
         price: Number(editingProduct.price),
         stock: Number(editingProduct.stock),
-        image: editingProduct.image,
+        image: editingProduct.image || "",
+        images: editingProduct.images || [],
       };
 
-      const res = await updateProduct(editingProduct._id, payload);
+      const response = await fetch(
+        `${baseUrl}/api/products/${editingProduct._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
 
-      if (
-        res &&
-        (res.success ||
-          res.result?.modifiedCount > 0 ||
-          res.result?.acknowledged)
-      ) {
-        alert("🎉 Product info updated successfully in database!");
+      if (response.ok) {
+        alert("🎉 Product info updated successfully!");
         setIsEditModalOpen(false);
-
-        // পেজ রিফ্রেশ ছাড়া টেবিলে নতুন ডেটা পুশ করার জন্য স্টেট সিঙ্ক
         setProducts((prev) =>
           prev.map((p) =>
             p._id === editingProduct._id ? { ...p, ...payload } : p,
           ),
         );
       } else {
-        alert(
-          `❌ Update failed: ${res?.message || "No changes were made to fields."}`,
-        );
+        alert("❌ Update failed on server.");
       }
     } catch (error) {
       console.error("Error updating product:", error);
@@ -173,6 +193,29 @@ const MyProductsPage = () => {
     }
   };
 
+  const getProductImage = (product) => {
+    if (product.image && typeof product.image === "string") {
+      return product.image;
+    }
+    if (
+      product.images &&
+      Array.isArray(product.images) &&
+      product.images.length > 0
+    ) {
+      return product.images[0];
+    }
+    return null;
+  };
+
+  if (!sellerEmail && loading) {
+    return (
+      <div className="flex justify-center items-center py-20 text-white">
+        <span className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500 border-t-transparent"></span>
+        <span className="ml-3 text-slate-400">Checking authorization...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 mt-6 pb-12 text-white max-w-6xl mx-auto px-4 sm:px-0">
       <DashboardHeading
@@ -180,7 +223,7 @@ const MyProductsPage = () => {
         description="Manage all products created by you. View, search, filter, edit or delete items instantly."
       />
 
-      {/* 🔍 লাইভ সার্চ এবং ফিল্টার কন্ট্রোলার */}
+      {/* 🔍 সার্চ এবং ফিল্টার কন্ট্রোলার */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-900/40 backdrop-blur-md border border-slate-800 p-4 rounded-xl shadow-lg">
         <div className="relative flex items-center col-span-1 md:col-span-2">
           <span className="absolute left-4 text-slate-500">
@@ -233,18 +276,18 @@ const MyProductsPage = () => {
         </div>
       </div>
 
-      {/* 📦 লাইভ ডাটা টেবিল */}
+      {/* 📦 ডাটা টেবিল */}
       {loading ? (
         <div className="flex justify-center items-center py-20">
           <span className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500 border-t-transparent"></span>
           <span className="ml-3 text-slate-400">
-            Fetching live products from database...
+            Loading products from API...
           </span>
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-16 bg-slate-900/20 border border-slate-800 rounded-2xl">
           <p className="text-slate-400 text-lg">
-            No products found in database matching the criteria.
+            No products found matching the criteria.
           </p>
         </div>
       ) : (
@@ -261,63 +304,66 @@ const MyProductsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
-              {paginatedProducts.map((product) => (
-                <tr
-                  key={product._id}
-                  className="hover:bg-slate-800/30 transition-colors"
-                >
-                  <td className="p-4 sm:p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 relative rounded-xl border border-slate-700 overflow-hidden flex-shrink-0 bg-slate-950">
-                      {product.image ? (
-                        <Image
-                          src={product.image}
-                          alt={product.title}
-                          fill
-                          unoptimized
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-600">
-                          No Image
-                        </div>
-                      )}
-                    </div>
-                    <div className="max-w-xs truncate font-semibold text-slate-200">
-                      {product.title}
-                    </div>
-                  </td>
+              {paginatedProducts.map((product) => {
+                const imgUrl = getProductImage(product);
+                return (
+                  <tr
+                    key={product._id}
+                    className="hover:bg-slate-800/30 transition-colors"
+                  >
+                    <td className="p-4 sm:p-5 flex items-center gap-4">
+                      <div className="w-12 h-12 relative rounded-xl border border-slate-700 overflow-hidden flex-shrink-0 bg-slate-950">
+                        {imgUrl ? (
+                          <Image
+                            src={imgUrl}
+                            alt={product.title}
+                            fill
+                            unoptimized
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-600">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                      <div className="max-w-xs truncate font-semibold text-slate-200">
+                        {product.title}
+                      </div>
+                    </td>
 
-                  <td className="p-4 text-slate-300">{product.category}</td>
-                  <td className="p-4">
-                    <span className="px-2.5 py-1 text-xs rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                      {product.condition}
-                    </span>
-                  </td>
-                  <td className="p-4 font-mono font-bold text-emerald-400">
-                    ৳ {product.price}
-                  </td>
-                  <td className="p-4 font-mono text-slate-400">
-                    {product.stock} pcs
-                  </td>
+                    <td className="p-4 text-slate-300">{product.category}</td>
+                    <td className="p-4">
+                      <span className="px-2.5 py-1 text-xs rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                        {product.condition}
+                      </span>
+                    </td>
+                    <td className="p-4 font-mono font-bold text-emerald-400">
+                      ৳ {product.price}
+                    </td>
+                    <td className="p-4 font-mono text-slate-400">
+                      {product.stock} pcs
+                    </td>
 
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => openEditModal(product)}
-                        className="p-2 text-cyan-400 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/20 rounded-lg transition-all"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product._id)}
-                        className="p-2 text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 rounded-lg transition-all"
-                      >
-                        <TrashBin className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="p-2 text-cyan-400 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/20 rounded-lg transition-all"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product._id)}
+                          className="p-2 text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 rounded-lg transition-all"
+                        >
+                          <TrashBin className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -326,7 +372,6 @@ const MyProductsPage = () => {
       {/* Pagination Bar */}
       {!loading && totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          {/* Showing X–Y of Z */}
           <p className="text-xs text-slate-500 font-medium">
             Showing{" "}
             <span className="text-slate-300 font-bold">
@@ -338,9 +383,7 @@ const MyProductsPage = () => {
             products
           </p>
 
-          {/* Page Buttons */}
           <div className="flex items-center gap-1.5">
-            {/* Prev */}
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
@@ -349,7 +392,6 @@ const MyProductsPage = () => {
               ‹
             </button>
 
-            {/* Page numbers with ellipsis */}
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(
                 (page) =>
@@ -387,7 +429,6 @@ const MyProductsPage = () => {
                 ),
               )}
 
-            {/* Next */}
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
@@ -399,7 +440,7 @@ const MyProductsPage = () => {
         </div>
       )}
 
-      {/* 🪟 UPDATE MODAL উইন্ডো */}
+      {/* 🪟 EDIT MODAL */}
       {isEditModalOpen && editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 relative text-white">

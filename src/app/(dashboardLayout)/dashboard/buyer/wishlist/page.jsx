@@ -7,7 +7,7 @@ import Link from "next/link";
 import DashboardHeading from "@/components/DashboardHeading";
 import { FaTrashAlt, FaEye, FaHeart, FaShoppingCart } from "react-icons/fa";
 import { getBuyerWishlist, removeFromWishlist } from "@/lib/api/buyerActions";
-
+import Image from "next/image";
 const WishlistPage = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +91,7 @@ const WishlistPage = () => {
           </p>
           <Link
             href="/products"
-            className="mt-6 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-950/20 hover:opacity-90 transition-all uppercase tracking-wider"
+            className="mt-6 px-5 py-2.5 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-950/20 hover:opacity-90 transition-all uppercase tracking-wider"
           >
             Discover Products
           </Link>
@@ -105,10 +105,11 @@ const WishlistPage = () => {
             >
               {/* প্রোডাক্ট ইমেজ */}
               <div className="relative aspect-square w-full bg-slate-950/40 overflow-hidden border-b border-slate-900">
-                <img
-                  src={item.image || "/placeholder.png"}
+                <Image
+                  src={item.image}
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fill
                 />
 
                 {/* কন্ডিশন ট্যাগ (যেমন: Used, Like New) */}
@@ -135,7 +136,7 @@ const WishlistPage = () => {
               </div>
 
               {/* প্রোডাক্ট ইনফো কন্টেন্ট */}
-              <div className="p-4 flex flex-col flex-grow space-y-3">
+              <div className="p-4 flex flex-col grow space-y-3">
                 <div className="space-y-1">
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                     {item.category || "General"}
@@ -172,7 +173,7 @@ const WishlistPage = () => {
                     disabled={item.stock <= 0}
                     className={`col-span-3 flex items-center justify-center gap-1.5 p-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
                       item.stock > 0
-                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:opacity-90"
+                        ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white hover:opacity-90"
                         : "bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed"
                     }`}
                   >

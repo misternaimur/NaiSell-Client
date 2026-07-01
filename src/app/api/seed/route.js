@@ -1,4 +1,7 @@
+/** @format */
+
 import { auth } from "@/lib/auth";
+import { hashPassword } from "@better-auth/utils/password";
 
 let cachedClient = null;
 let cachedDb = null;
@@ -19,17 +22,37 @@ export async function POST(request) {
 
     const db = await getDb();
     const usersCollection = db.collection("user");
+    const accountsCollection = db.collection("account");
 
     // Check if user already exists
     const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
-      if (role) {
-        await usersCollection.updateOne(
-          { email },
-          { $set: { role } }
-        );
+      const existingCredentialAccount = await accountsCollection.findOne({
+        providerId: "credential",
+        userId: existingUser._id,
+      });
+
+      if (!existingCredentialAccount) {
+        const passwordHash = await hashPassword(password);
+        await accountsCollection.insertOne({
+          accountId: existingUser._id.toString(),
+          providerId: "credential",
+          userId: existingUser._id,
+          password: passwordHash,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
       }
-      return Response.json({ message: "User already exists", userId: existingUser._id.toString() });
+
+      if (role) {
+        await usersCollection.updateOne({ email }, { $set: { role } });
+      }
+
+      return Response.json({
+        message: "User already exists",
+        userId: existingUser._id.toString(),
+        credentialAccountCreated: !existingCredentialAccount,
+      });
     }
 
     // Create user through Better-Auth
@@ -39,10 +62,7 @@ export async function POST(request) {
 
     // Update role if specified
     if (role && result.user) {
-      await usersCollection.updateOne(
-        { email },
-        { $set: { role } }
-      );
+      await usersCollection.updateOne({ email }, { $set: { role } });
     }
 
     return Response.json({ message: "User created", user: result.user });

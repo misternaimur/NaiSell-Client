@@ -2,21 +2,23 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image"; // 🚀 Next.js Image Component Import kora holo
+import Image from "next/image";
 import DashboardHeading from "@/components/DashboardHeading";
-import { addProduct } from "@/lib/api/sellerActions"; // 🛠️ Import match kore nibe
-import {
-  CirclePlusFill,
-  CloudArrowUpIn,
-  Archive,
-  Hashtag,
-  Link,
-} from "@gravity-ui/icons";
+import { addProduct } from "@/lib/api/sellerActions";
+import { CloudArrowUpIn, Archive, Hashtag, Link } from "@gravity-ui/icons";
+import { uploadImage } from "@/utils/uploadImage";
+import { toast } from "react-toastify";
+// 💡 ফিক্স: সেশন থেকে লগইন করা ইউজারের ইমেইল বের করার জন্য হুক ইম্পোর্ট করা হলো
+import { useSession } from "@/lib/auth-client";
 
 const AddProductPage = () => {
+  // 💡 সেশন ডেটা নেওয়া হচ্ছে
+  const { data: session } = useSession();
+
   const [loading, setLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false); // 🌟 Success border effect handle করার জন্য স্টেট
-  const [imageMethod, setImageMethod] = useState("upload"); // 'upload' | 'url'
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [imageMethod, setImageMethod] = useState("upload");
+  const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -25,7 +27,7 @@ const AddProductPage = () => {
     condition: "",
     price: "",
     stock: "",
-    image: "", // Base64 ba direct Image URL
+    image: "",
   });
 
   const handleChange = (e) => {
@@ -33,21 +35,31 @@ const AddProductPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 📂 Local file upload handler (Convert to Base64)
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert("❌ File size must be less than 2MB");
-      return;
-    }
+    try {
+      setUploading(true);
+      const imageUrl = await uploadImage(file);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({ ...prev, image: reader.result }));
-    };
-    reader.readAsDataURL(file);
+      if (!imageUrl) {
+        toast.error("Image upload failed.");
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        image: imageUrl,
+      }));
+
+      toast.success("Product image uploaded successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Image upload failed.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const categories = [
@@ -62,8 +74,14 @@ const AddProductPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 💡 সিকিউরিটি চেক: ইউজার লগইন না থাকলে সাবমিট করতে দেবে না
+    if (!session?.user?.email) {
+      toast.error("❌ Please log in first to add a product!");
+      return;
+    }
+
     if (!formData.image) {
-      alert("❌ Please upload an image or provide a web URL first!");
+      toast.warn("❌ Please upload an image or provide a web URL first!");
       return;
     }
 
@@ -73,14 +91,15 @@ const AddProductPage = () => {
       ...formData,
       price: Number(formData.price),
       stock: Number(formData.stock),
-      sellerEmail: "seller@naisell.com",
+      // এখন নিশ্চিতভাবে লগইন করা ইউজারের ডাইনামিক ইমেইলটি ডাটাবেজে যাবে
+      sellerEmail: session.user.email,
     };
 
     try {
       const data = await addProduct(productSubmitData);
 
       if (data.success || data._id) {
-        // ⚡ সাকসেস ইফেক্ট অ্যাক্টিভেট করা হচ্ছে
+        toast.success("🎉 Product published successfully!");
         setIsSuccess(true);
 
         setFormData({
@@ -93,16 +112,17 @@ const AddProductPage = () => {
           image: "",
         });
 
-        // ⏱️ ৩ সেকেন্ড পর সাকসেস গ্লোয়িং বর্ডার ইফেক্ট বন্ধ হবে
         setTimeout(() => {
           setIsSuccess(false);
         }, 3000);
       } else {
-        alert(`❌ Failed to add product: ${data.message || "Unknown error"}`);
+        toast.error(
+          `❌ Failed to add product: ${data.message || "Unknown error"}`,
+        );
       }
     } catch (error) {
       console.error("Error adding product:", error);
-      alert("❌ Something went wrong while connecting to the server.");
+      toast.error("❌ Something went wrong while connecting to the server.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +136,6 @@ const AddProductPage = () => {
       />
 
       <form onSubmit={handleSubmit}>
-        {/* 🌟 dynamic className-এ 'isSuccess' ট্রু হলে রিং, শ্যাডো এবং স্কেল ইফেক্ট অ্যাড করা হয়েছে */}
         <div
           className={`bg-slate-900/40 backdrop-blur-md p-6 sm:p-8 rounded-2xl space-y-6 transition-all duration-700 ease-out border ${
             isSuccess
@@ -124,7 +143,6 @@ const AddProductPage = () => {
               : "border-slate-800 shadow-2xl"
           }`}
         >
-          {/* 🔘 Image selection controller */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
               Image Selection Method
@@ -136,7 +154,7 @@ const AddProductPage = () => {
                   setImageMethod("upload");
                   setFormData((prev) => ({ ...prev, image: "" }));
                 }}
-                className={`flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   imageMethod === "upload"
                     ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-md"
                     : "text-slate-400 hover:text-slate-200"
@@ -151,7 +169,7 @@ const AddProductPage = () => {
                   setImageMethod("url");
                   setFormData((prev) => ({ ...prev, image: "" }));
                 }}
-                className={`flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   imageMethod === "url"
                     ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-md"
                     : "text-slate-400 hover:text-slate-200"
@@ -163,14 +181,13 @@ const AddProductPage = () => {
             </div>
           </div>
 
-          {/* 🔄 Conditional Image input layer with next/image optimization */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
               Product Image
             </label>
 
             {imageMethod === "upload" ? (
-              <div className="group flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/40 rounded-2xl p-6 transition-all duration-300 relative min-h-[160px]">
+              <div className="group flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/40 rounded-2xl p-6 transition-all duration-300 relative min-h-40">
                 <input
                   type="file"
                   accept="image/*"
@@ -178,10 +195,10 @@ const AddProductPage = () => {
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
 
-                {formData.image && formData.image.startsWith("data:image") ? (
+                {formData.image ? (
                   <div className="flex flex-col items-center gap-3">
                     <Image
-                      src={formData.image}
+                      src={formData.image || "/avatar-placeholder.png"}
                       alt="Product Preview"
                       width={96}
                       height={96}
@@ -216,21 +233,17 @@ const AddProductPage = () => {
                 <input
                   type="url"
                   name="image"
-                  value={
-                    formData.image.startsWith("data:image")
-                      ? ""
-                      : formData.image
-                  }
+                  value={formData.image}
                   onChange={handleChange}
                   placeholder="https://example.com/image.jpg"
                   required={imageMethod === "url"}
                   className="w-full max-w-md h-11 px-4 rounded-xl border border-slate-800 bg-slate-900/50 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors font-mono text-sm"
                 />
 
-                {formData.image && !formData.image.startsWith("data:image") && (
+                {formData.image && (
                   <div className="w-20 h-20 relative border border-slate-700 shadow-md rounded-xl overflow-hidden mt-2">
                     <Image
-                      src={formData.image}
+                      src={formData.image || "/avatar-placeholder.png"}
                       alt="URL Preview"
                       fill
                       unoptimized
@@ -242,7 +255,6 @@ const AddProductPage = () => {
             )}
           </div>
 
-          {/* Product Title */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
               Product Title
@@ -258,7 +270,6 @@ const AddProductPage = () => {
             />
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
               Description
@@ -270,11 +281,10 @@ const AddProductPage = () => {
               placeholder="Describe the product features, specifications..."
               required
               rows={4}
-              className="w-full p-4 rounded-xl border border-slate-800 bg-slate-900/50 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-y min-h-[100px]"
+              className="w-full p-4 rounded-xl border border-slate-800 bg-slate-900/50 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors resize-y min-h-25"
             />
           </div>
 
-          {/* Dropdowns Group */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
@@ -342,7 +352,6 @@ const AddProductPage = () => {
             </div>
           </div>
 
-          {/* Price & Stock */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
@@ -385,24 +394,17 @@ const AddProductPage = () => {
             </div>
           </div>
 
-          {/* Submit Action */}
           <div className="pt-4 flex justify-end">
             <button
               type="submit"
-              disabled={loading}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 text-white font-bold px-8 h-12 rounded-xl shadow-lg transition-all duration-300"
+              disabled={loading || uploading}
+              className="flex items-center gap-2 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 text-white font-bold px-8 h-12 rounded-xl shadow-lg transition-all duration-300 cursor-pointer"
             >
-              {loading ? (
-                <>
-                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                  Publishing Listing...
-                </>
-              ) : (
-                <>
-                  <CirclePlusFill className="w-4 h-4" />
-                  Publish Product
-                </>
-              )}
+              {loading
+                ? "Publishing Listing..."
+                : uploading
+                  ? "Uploading Image..."
+                  : "Publish Product"}
             </button>
           </div>
         </div>

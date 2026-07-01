@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStore, faArrowLeft, faStar, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
-
+import Image from "next/image";
 export default function SellerProfilePage() {
   const params = useParams();
   const sellerEmail = decodeURIComponent(params.email);
@@ -97,10 +97,11 @@ export default function SellerProfilePage() {
                   className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden hover:border-primary/30 transition-colors cursor-pointer"
                 >
                   <div className="aspect-square bg-surface-container-high">
-                    <img
-                      src={product.images?.[0] || "/placeholder.png"}
+                    <Image
+                      src={product.images?.[0]}
                       alt={product.title}
                       className="w-full h-full object-cover"
+                      fill
                     />
                   </div>
                   <div className="p-3">

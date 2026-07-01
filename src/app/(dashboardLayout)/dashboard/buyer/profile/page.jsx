@@ -9,6 +9,7 @@ import { getBuyerProfile, updateBuyerProfile } from "@/lib/api/buyerActions";
 import { uploadImage } from "@/utils/uploadImage";
 import { toast } from "react-toastify";
 import { FaCamera, FaUserCircle } from "react-icons/fa";
+import Image from "next/image";
 
 const BuyerProfilePage = () => {
   const { data: session } = useSession();
@@ -120,7 +121,7 @@ const BuyerProfilePage = () => {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 {previewImage ? (
-                  <img
+                  <Image
                     src={previewImage}
                     alt="Profile"
                     className="h-32 w-32 rounded-full object-cover border-4 border-slate-700 shadow-lg"
@@ -189,7 +190,7 @@ const BuyerProfilePage = () => {
               <button
                 onClick={handleSave}
                 disabled={saving || uploading}
-                className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+                className="rounded-xl bg-linear-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>

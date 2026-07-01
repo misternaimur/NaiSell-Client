@@ -112,7 +112,7 @@ export default function ProfilePage() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 rounded-[8px] border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
+            className="w-full px-4 py-3 rounded-2xl border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
             placeholder="Enter your name"
           />
         </div>
@@ -124,7 +124,7 @@ export default function ProfilePage() {
             type="url"
             value={image}
             onChange={(e) => setImage(e.target.value)}
-            className="w-full px-4 py-3 rounded-[8px] border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
+            className="w-full px-4 py-3 rounded-2xl border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
             placeholder="https://example.com/avatar.jpg"
           />
         </div>
@@ -134,7 +134,7 @@ export default function ProfilePage() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-primary text-on-primary font-semibold px-6 h-10 rounded-[8px] shadow-sm hover:bg-primary/95 transition-all font-sans"
+            className="bg-primary text-on-primary font-semibold px-6 h-10 rounded-2xl shadow-sm hover:bg-primary/95 transition-all font-sans"
           >
             {saving ? "Saving..." : "Save Changes"}
           </Button>

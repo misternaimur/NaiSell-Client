@@ -4,6 +4,7 @@
 
 import React from "react";
 import { useForm, Controller } from "react-hook-form";
+// HeroUI (বা NextUI) থেকে প্রয়োজনীয় UI কম্পোনেন্টগুলো ইমপোর্ট করা হয়েছে
 import {
   Form,
   TextField,
@@ -16,6 +17,7 @@ import {
   Button,
   Card,
 } from "@heroui/react";
+// আইকন ব্যবহারের জন্য FontAwesome ইমপোর্ট করা হয়েছে
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -24,11 +26,15 @@ import {
   faUserTag,
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons"; // ফিক্স: গুগলের ব্র্যান্ড আইকন ইমপোর্ট করা হয়েছে
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { authClient } from "../../../lib/auth-client";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation"; // ফিক্স: router ব্যবহারের জন্য useRouter ইমপোর্ট করা হলো
 
 export default function RegisterForm() {
+  const router = useRouter(); // ফিক্স: useRouter হুক ইনিশিয়েট করা হলো
+
+  // react-hook-form এর মাধ্যমে ফর্ম স্টেট ও ভ্যালিডেশন হ্যান্ডেল করা হচ্ছে
   const {
     control,
     handleSubmit,
@@ -43,10 +49,13 @@ export default function RegisterForm() {
     },
   });
 
+  // ইমেইল এবং পাসওয়ার্ড দিয়ে রেজিস্ট্রেশন করার সাবমিট ফাংশন
   const onSubmit = async (data) => {
+    // লোডিং টোস্ট মেসেজ শুরু
     const toastId = toast.loading("Creating your account... Please wait.");
 
     try {
+      // authClient এর মাধ্যমে সাইন-আপ রিকোয়েস্ট পাঠানো
       const { data: signupData, error: signupError } =
         await authClient.signUp.email({
           email: data.email,
@@ -55,6 +64,7 @@ export default function RegisterForm() {
           role: data.role,
         });
 
+      // সাইন-আপে কোনো এরর থাকলে টোস্ট আপডেট ও এরর শো করা
       if (signupError) {
         toast.update(toastId, {
           render: signupError.message || "Signup failed!",
@@ -64,16 +74,27 @@ export default function RegisterForm() {
         });
         console.log("Signup Error:", signupError.message);
       } else {
+        // সাইন-আপ সফল হলে সফলতার টোস্ট মেসেজ দেখানো
         toast.update(toastId, {
           render: "Registration Successful! Welcome to NaiSell Hub.",
           type: "success",
           isLoading: false,
           autoClose: 3000,
         });
+
         console.log("Signup Response:", signupData);
-        reset();
+        reset(); // ফর্মের সকল ইনপুট ফিল্ড খালি বা রিসেট করা
+
+        // ইউজারের রোল (seller/buyer) অনুযায়ী নির্দিষ্ট ড্যাশবোর্ডে রিডাইরেক্ট করা
+        const role = signupData?.user?.role;
+        if (role === "seller") {
+          router.push("/dashboard/seller");
+        } else if (role === "buyer") {
+          router.push("/dashboard/buyer");
+        }
       }
     } catch (err) {
+      // কোনো অপ্রত্যাশিত বা নেটওয়ার্ক এরর হলে তা হ্যান্ডেল করা
       toast.update(toastId, {
         render: "An unexpected error occurred. Try again.",
         type: "error",
@@ -86,7 +107,9 @@ export default function RegisterForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-12 font-sans">
+      {/* মেইন ফর্ম কার্ড কন্টেইনার */}
       <Card className="w-full max-w-md rounded-2xl border border-outline-variant bg-surface-container-lowest p-8 shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+        {/* ফর্ম হেডার অংশ */}
         <div className="flex flex-col items-center gap-1.5 pb-6 text-center">
           <h1 className="font-display text-2xl font-bold tracking-tight text-on-surface mt-4">
             Create an Account
@@ -95,42 +118,47 @@ export default function RegisterForm() {
             Join NaiSell Hub curated marketplace
           </p>
         </div>
-<div className="w-full">
-            <Button
-              type="button"
-              variant="bordered"
-              onClick={async () => {
-                const toastId = toast.loading("Connecting to Google...");
-                try {
-                  await authClient.signIn.social({
-                    provider: "google",
-                    callbackURL: "/dashboard",
-                  });
-                } catch (err) {
-                  console.error("Google login error:", err);
-                  toast.update(toastId, {
-                    render: err.message || "Google login failed",
-                    type: "error",
-                    isLoading: false,
-                    autoClose: 3000,
-                  });
-                }
-              }}
-              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
-            >
-              <FontAwesomeIcon
-                icon={faGoogle}
-                className="text-base text-primary"
-              />
-              Log in with Google
-            </Button>
-          </div>
+
+        {/* গুগল দিয়ে সরাসরি লগইন করার বাটন */}
+        <div className="w-full mb-5">
+          <Button
+            type="button"
+            variant="bordered"
+            onClick={async () => {
+              const toastId = toast.loading("Connecting to Google...");
+              try {
+                // গুগলের সোশ্যাল লগইন সার্ভিস কল করা
+                await authClient.signIn.social({
+                  provider: "google",
+                  callbackURL: "/dashboard",
+                });
+              } catch (err) {
+                console.error("Google login error:", err);
+                toast.update(toastId, {
+                  render: err.message || "Google login failed",
+                  type: "error",
+                  isLoading: false,
+                  autoClose: 3000,
+                });
+              }
+            }}
+            className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
+          >
+            <FontAwesomeIcon
+              icon={faGoogle}
+              className="text-base text-primary"
+            />
+            Log in with Google
+          </Button>
+        </div>
+
+        {/* মেইন ইনপুট ফর্ম */}
         <div>
           <Form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
           >
-            {/* User Name Field */}
+            {/* ১. ইউজার নাম ইনপুট ফিল্ড */}
             <Controller
               name="name"
               control={control}
@@ -167,7 +195,7 @@ export default function RegisterForm() {
               )}
             />
 
-            {/* Email Field */}
+            {/* ২. ইমেইল এড্রেস ইনপুট ফিল্ড */}
             <Controller
               name="email"
               control={control}
@@ -205,7 +233,7 @@ export default function RegisterForm() {
               )}
             />
 
-            {/* Password Field */}
+            {/* ৩. পাসওয়ার্ড ইনপুট ফিল্ড (ভ্যালিডেশন সহ) */}
             <Controller
               name="password"
               control={control}
@@ -253,7 +281,7 @@ export default function RegisterForm() {
               )}
             />
 
-            {/* Role Select Field */}
+            {/* ৪. রোল সিলেক্ট ফিল্ড (Buyer বা Seller সিলেক্ট করার জন্য) */}
             <Controller
               name="role"
               control={control}
@@ -270,6 +298,7 @@ export default function RegisterForm() {
                     onSelectionChange={onChange}
                     aria-label="Select your role"
                   >
+                    {/* ড্রপডাউন ট্রিগার বাটন */}
                     <Select.Trigger className="w-full flex items-center gap-2 px-3.5 py-2 bg-surface-container-low border border-outline-variant rounded-[8px] text-on-surface hover:border-outline data-[focus=true]:border-primary transition-colors text-sm font-sans">
                       <FontAwesomeIcon
                         icon={faUserTag}
@@ -279,6 +308,7 @@ export default function RegisterForm() {
                       <Select.Indicator className="ml-auto text-outline" />
                     </Select.Trigger>
 
+                    {/* ড্রপডাউন অপশন লিস্ট */}
                     <Select.Popover className="border border-outline-variant bg-surface-container-lowest rounded-lg shadow-xl p-1 text-on-surface">
                       <ListBox>
                         <ListBox.Item
@@ -307,7 +337,7 @@ export default function RegisterForm() {
               )}
             />
 
-            {/* Primary Submit Button */}
+            {/* ফর্ম সাবমিট করার মেইন বাটন */}
             <Button
               type="submit"
               disabled={isSubmitting}

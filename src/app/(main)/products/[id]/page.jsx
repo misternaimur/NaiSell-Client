@@ -1,3 +1,5 @@
+/** @format */
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,9 +9,15 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { Button } from "@heroui/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar, faCheckCircle, faArrowLeft, faHeart } from "@fortawesome/free-solid-svg-icons";
+import {
+  faStar,
+  faCheckCircle,
+  faArrowLeft,
+  faHeart,
+} from "@fortawesome/free-solid-svg-icons";
 import { useSession } from "@/lib/auth-client";
 import { addToWishlist } from "@/lib/api/buyerActions";
+import { getAuthHeaders } from "@/lib/api/server";
 
 const getConditionStyle = (condition) => {
   switch (condition?.toLowerCase()) {
@@ -37,10 +45,14 @@ export default function ProductDetailsPage() {
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  const productId = params?.id;
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/products/${params.id}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/products/${productId}`,
+        );
         if (!res.ok) throw new Error("Product not found");
         const data = await res.json();
         setProduct(data);
@@ -50,21 +62,23 @@ export default function ProductDetailsPage() {
         setLoading(false);
       }
     };
-    if (params.id) fetchProduct();
-  }, [params.id]);
+    if (productId) fetchProduct();
+  }, [productId]);
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/reviews/${params.id}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/reviews/${productId}`,
+        );
         const data = await res.json();
         setReviews(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch reviews:", error);
       }
     };
-    if (params.id) fetchReviews();
-  }, [params.id]);
+    if (productId) fetchReviews();
+  }, [productId]);
 
   const handleWishlist = async () => {
     if (!session) return router.push("/auth/login");
@@ -93,22 +107,31 @@ export default function ProductDetailsPage() {
     if (!newReview.comment.trim()) return;
     setSubmittingReview(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.session?.token || ""}`,
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/reviews`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders,
+          },
+          body: JSON.stringify({
+            productId: productId,
+            reviewerInfo: {
+              userId: session.user.email,
+              name: session.user.name || "User",
+            },
+            rating: newReview.rating,
+            comment: newReview.comment,
+          }),
         },
-        body: JSON.stringify({
-          productId: params.id,
-          reviewerInfo: { userId: session.user.email, name: session.user.name || "User" },
-          rating: newReview.rating,
-          comment: newReview.comment,
-        }),
-      });
+      );
       if (res.ok) {
         setNewReview({ rating: 5, comment: "" });
-        const updated = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/reviews/${params.id}`);
+        const updated = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/reviews/${productId}`,
+        );
         const data = await updated.json();
         setReviews(Array.isArray(data) ? data : []);
       }
@@ -142,10 +165,16 @@ export default function ProductDetailsPage() {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-on-surface font-display">Product Not Found</h2>
-          <p className="text-on-surface-variant font-sans">The product you&apos;re looking for doesn&apos;t exist.</p>
+          <h2 className="text-2xl font-bold text-on-surface font-display">
+            Product Not Found
+          </h2>
+          <p className="text-on-surface-variant font-sans">
+            The product you&apos;re looking for doesn&apos;t exist.
+          </p>
           <Link href="/products">
-            <Button className="bg-primary text-on-primary font-sans">Browse Products</Button>
+            <Button className="bg-primary text-on-primary font-sans">
+              Browse Products
+            </Button>
           </Link>
         </div>
       </div>
@@ -173,12 +202,17 @@ export default function ProductDetailsPage() {
             className="space-y-4"
           >
             {/* Main Image */}
-            <div className="aspect-square rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container-lowest">
-              <img
-                src={product.images?.[selectedImage] || "/placeholder.png"}
-                alt={product.title}
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-square rounded-2xl overflow-hidden border border-outline-variant/30 bg-surface-container-lowest relative">
+              {product.images?.[selectedImage] && (
+                <Image
+                  src={product.images[selectedImage]}
+                  alt={product.title || "Product Image"}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
+                  className="object-cover"
+                />
+              )}
             </div>
 
             {/* Thumbnail Strip */}
@@ -188,11 +222,19 @@ export default function ProductDetailsPage() {
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors cursor-pointer ${
-                      selectedImage === i ? "border-primary" : "border-outline-variant/30"
+                    className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors cursor-pointer relative ${
+                      selectedImage === i
+                        ? "border-primary"
+                        : "border-outline-variant/30"
                     }`}
                   >
-                    <img src={img} alt={`${product.title} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                    <Image
+                      src={img}
+                      alt={`${product.title || "Product"} thumbnail ${i + 1}`}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
                   </button>
                 ))}
               </div>
@@ -212,7 +254,9 @@ export default function ProductDetailsPage() {
                 {product.category}
               </span>
               <span className="text-outline">·</span>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getConditionStyle(product.condition)}`}>
+              <span
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getConditionStyle(product.condition)}`}
+              >
                 {product.condition}
               </span>
             </div>
@@ -233,18 +277,27 @@ export default function ProductDetailsPage() {
             {product.sellerInfo && (
               <div className="flex items-center gap-3 py-4 border-y border-outline-variant/20">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <FontAwesomeIcon icon={faCheckCircle} className="text-primary" />
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-primary"
+                  />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-on-surface font-sans">{product.sellerInfo.name}</p>
-                  <p className="text-xs text-outline font-sans">Verified Seller</p>
+                  <p className="text-sm font-bold text-on-surface font-sans">
+                    {product.sellerInfo.name}
+                  </p>
+                  <p className="text-xs text-outline font-sans">
+                    Verified Seller
+                  </p>
                 </div>
               </div>
             )}
 
             {/* Description */}
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider font-sans">Description</h3>
+              <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider font-sans">
+                Description
+              </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed font-sans">
                 {product.description}
               </p>
@@ -253,7 +306,8 @@ export default function ProductDetailsPage() {
             {/* Stock */}
             {product.stock !== undefined && (
               <p className="text-sm text-on-surface-variant font-sans">
-                <span className="font-semibold text-on-surface">Stock:</span> {product.stock} available
+                <span className="font-semibold text-on-surface">Stock:</span>{" "}
+                {product.stock} available
               </p>
             )}
 
@@ -261,19 +315,26 @@ export default function ProductDetailsPage() {
             <div className="flex flex-wrap gap-3 pt-4">
               <Button
                 onClick={handleBuyNow}
-                className="bg-primary text-on-primary font-semibold px-8 h-12 rounded-[8px] shadow-sm hover:bg-primary/95 transition-all font-sans flex-1 sm:flex-none"
+                className="bg-primary text-on-primary font-semibold px-8 h-12 rounded-2xl shadow-sm hover:bg-primary/95 transition-all font-sans flex-1 sm:flex-none"
               >
                 Buy Now
               </Button>
               <Button
                 onClick={handleWishlist}
                 variant="bordered"
-                className={`border-outline font-semibold px-6 h-12 rounded-[8px] transition-all font-sans ${
-                  wishlisted ? "bg-primary/10 text-primary border-primary" : "text-on-surface-variant hover:bg-on-surface/5"
+                className={`border-outline font-semibold px-6 h-12 rounded-2xl transition-all font-sans ${
+                  wishlisted
+                    ? "bg-primary/10 text-primary border-primary"
+                    : "text-on-surface-variant hover:bg-on-surface/5"
                 }`}
               >
-                <FontAwesomeIcon icon={faHeart} className={wishlisted ? "text-primary" : ""} />
-                <span className="ml-2">{wishlisted ? "Wishlisted" : "Add to Wishlist"}</span>
+                <FontAwesomeIcon
+                  icon={faHeart}
+                  className={wishlisted ? "text-primary" : ""}
+                />
+                <span className="ml-2">
+                  {wishlisted ? "Wishlisted" : "Add to Wishlist"}
+                </span>
               </Button>
             </div>
           </motion.div>
@@ -281,17 +342,23 @@ export default function ProductDetailsPage() {
 
         {/* Reviews Section */}
         <div className="mt-12 space-y-6">
-          <h2 className="text-xl font-bold text-on-surface font-display">Reviews ({reviews.length})</h2>
+          <h2 className="text-xl font-bold text-on-surface font-display">
+            Reviews ({reviews.length})
+          </h2>
 
           {/* Review Form */}
           {session && (
             <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-5 space-y-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-on-surface font-sans">Your Rating:</span>
+                <span className="text-sm font-bold text-on-surface font-sans">
+                  Your Rating:
+                </span>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
-                    onClick={() => setNewReview((prev) => ({ ...prev, rating: star }))}
+                    onClick={() =>
+                      setNewReview((prev) => ({ ...prev, rating: star }))
+                    }
                     className="cursor-pointer"
                   >
                     <FontAwesomeIcon
@@ -303,15 +370,17 @@ export default function ProductDetailsPage() {
               </div>
               <textarea
                 value={newReview.comment}
-                onChange={(e) => setNewReview((prev) => ({ ...prev, comment: e.target.value }))}
+                onChange={(e) =>
+                  setNewReview((prev) => ({ ...prev, comment: e.target.value }))
+                }
                 placeholder="Write your review..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-[8px] border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary transition resize-none"
+                className="w-full px-4 py-3 rounded-2xl border border-outline-variant/40 bg-surface text-on-surface text-sm font-sans focus:outline-none focus:border-primary transition resize-none"
               />
               <Button
                 onClick={handleSubmitReview}
                 disabled={submittingReview || !newReview.comment.trim()}
-                className="bg-primary text-on-primary font-semibold px-6 h-10 rounded-[8px] text-sm font-sans"
+                className="bg-primary text-on-primary font-semibold px-6 h-10 rounded-2xl text-sm font-sans"
               >
                 {submittingReview ? "Submitting..." : "Submit Review"}
               </Button>
@@ -320,23 +389,40 @@ export default function ProductDetailsPage() {
 
           {/* Reviews List */}
           {reviews.length === 0 ? (
-            <p className="text-on-surface-variant text-sm font-sans">No reviews yet. Be the first to review this product.</p>
+            <p className="text-on-surface-variant text-sm font-sans">
+              No reviews yet. Be the first to review this product.
+            </p>
           ) : (
             <div className="space-y-4">
               {reviews.map((review) => (
-                <div key={review._id} className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 p-5">
+                <div
+                  key={review._id}
+                  className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 p-5"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-on-surface font-sans">{review.reviewerInfo?.name || "User"}</span>
+                      <span className="text-sm font-bold text-on-surface font-sans">
+                        {review.reviewerInfo?.name || "User"}
+                      </span>
                       <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <FontAwesomeIcon key={s} icon={faStar} className={`w-3 h-3 ${s <= (review.rating || 5) ? "text-secondary-container" : "text-outline-variant"}`} />
+                          <FontAwesomeIcon
+                            key={s}
+                            icon={faStar}
+                            className={`w-3 h-3 ${s <= (review.rating || 5) ? "text-secondary-container" : "text-outline-variant"}`}
+                          />
                         ))}
                       </div>
                     </div>
-                    <span className="text-xs text-outline font-sans">{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ""}</span>
+                    <span className="text-xs text-outline font-sans">
+                      {review.createdAt
+                        ? new Date(review.createdAt).toLocaleDateString()
+                        : ""}
+                    </span>
                   </div>
-                  <p className="text-sm text-on-surface-variant font-sans">{review.comment}</p>
+                  <p className="text-sm text-on-surface-variant font-sans">
+                    {review.comment}
+                  </p>
                 </div>
               ))}
             </div>

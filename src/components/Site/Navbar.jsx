@@ -21,6 +21,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Outside pointer actions processing trigger handler hook mapping listener
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -52,13 +53,21 @@ export default function Navbar() {
     { name: "Dashboard", href: "/dashboard" },
   ];
 
+  // Dynamically resolve avatar source image profile configuration data logs bypass parser matrix logic
+  // Empty string ("") ba false parameters bypass logic checking standard mapping wrapper configurations
+  const avatarSrc =
+    session?.user?.image && session.user.image.trim() !== ""
+      ? session.user.image
+      : "https://api.dicebear.com/7.x/initials/svg?seed=" +
+        (session?.user?.name || "User");
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-outline-variant/30 bg-surface/80 backdrop-blur-md py-4 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo */}
+        {/* Core Layout Identity Brand Module Icon Element Component Interface */}
         <Logo />
 
-        {/* Desktop Nav links */}
+        {/* Navigation Core Routing Link Configurations Area */}
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
@@ -66,11 +75,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-sm font-medium transition-colors font-sans ${
-                  isActive
-                    ? "text-primary font-bold"
-                    : "text-on-surface-variant hover:text-on-surface"
-                }`}
+                className={`text-sm font-medium transition-colors font-sans ${isActive ? "text-primary font-bold" : "text-on-surface-variant hover:text-on-surface"}`}
               >
                 {link.name}
               </Link>
@@ -78,19 +83,20 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Right Actions */}
+        {/* Dynamic State Operations Interface Panel Elements Actions Configs */}
         <div className="flex items-center gap-4">
           <ThemeToggle />
+
           {!session && (
             <div className="hidden sm:flex items-center gap-3">
               <Link href="/auth/login">
-                <button className="inline-flex items-center justify-center font-semibold text-xs text-on-surface-variant hover:text-on-surface h-9 px-4 rounded-[8px] hover:bg-on-surface/5 transition font-sans">
+                <button className="inline-flex items-center justify-center font-semibold text-xs text-on-surface-variant hover:text-on-surface h-9 px-4 rounded-2xl hover:bg-on-surface/5 transition font-sans">
                   Login
                 </button>
               </Link>
               <Link
                 href="/auth/register"
-                className="inline-flex items-center justify-center font-semibold text-xs bg-primary text-on-primary shadow-sm hover:bg-primary/90 transition h-9 px-4 rounded-[8px] font-sans"
+                className="inline-flex items-center justify-center font-semibold text-xs bg-primary text-on-primary shadow-sm hover:bg-primary/90 transition h-9 px-4 rounded-2xl font-sans"
               >
                 Register
               </Link>
@@ -107,8 +113,9 @@ export default function Navbar() {
                   width={36}
                   height={36}
                   className="w-9 h-9 rounded-full object-cover border border-primary shadow-sm"
-                  src={session?.user?.image || "/avatar-placeholder.png"}
+                  src={avatarSrc} // Warning resolved validation processing variable applied tracking logic
                   alt="avatar"
+                  priority
                 />
               </button>
 
@@ -158,7 +165,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Hamburger toggle */}
+          {/* Hamburger responsive control action items navigation elements selector button config */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-1.5 text-on-surface-variant hover:text-on-surface lg:hidden transition outline-none cursor-pointer"
@@ -190,7 +197,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Responsive View Display Block Element Dynamic Routing Navigation Layout Overlay Configurations */}
       {mobileMenuOpen && (
         <div className="mt-3 rounded-2xl border border-outline-variant/40 bg-surface-container-lowest p-5 lg:hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-4">
@@ -198,11 +205,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-sm py-1 transition font-sans ${
-                  pathname === link.href
-                    ? "text-primary font-bold"
-                    : "text-on-surface-variant hover:text-on-surface"
-                }`}
+                className={`text-sm py-1 transition font-sans ${pathname === link.href ? "text-primary font-bold" : "text-on-surface-variant hover:text-on-surface"}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.name}
@@ -215,14 +218,14 @@ export default function Navbar() {
                 <div className="flex flex-col gap-3">
                   <Link
                     href="/auth/login"
-                    className="font-medium text-on-surface-variant text-center text-sm transition py-2 rounded-[8px] hover:bg-on-surface/5 font-sans"
+                    className="font-medium text-on-surface-variant text-center text-sm transition py-2 rounded-2xl hover:bg-on-surface/5 font-sans"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Login
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="rounded-[8px] bg-primary py-2.5 text-center text-sm text-on-primary font-medium transition hover:bg-primary/90 font-sans"
+                    className="rounded-2xl bg-primary py-2.5 text-center text-sm text-on-primary font-medium transition hover:bg-primary/90 font-sans"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Register

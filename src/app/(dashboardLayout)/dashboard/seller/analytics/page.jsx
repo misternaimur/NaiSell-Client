@@ -12,51 +12,94 @@ import {
   faBoxesStacked,
   faChartLine,
 } from "@fortawesome/free-solid-svg-icons";
+// 💡 সেশন থেকে লগইন করা ইউজারের ইমেইল বের করার হুক
+import { useSession } from "@/lib/auth-client";
 
 const SalesAnalyticsPage = () => {
+  const { data: session, isPending: sessionLoading } = useSession();
+
   const [analyticsData, setAnalyticsData] = useState(null);
+  const [totalProductsCount, setTotalProductsCount] = useState(0); // 💡 প্রোডাক্ট কাউন্ট স্টেট
   const [loading, setLoading] = useState(true);
 
-  const sellerEmail = "seller@naisell.com";
+  const sellerEmail = session?.user?.email;
 
   useEffect(() => {
-    const fetchAnalyticsFromDB = async () => {
+    const fetchAnalyticsAndProducts = async () => {
+      if (!sellerEmail) return;
+
       try {
         setLoading(true);
-        const res = await getSellerAnalytics(sellerEmail);
 
-        if (res) {
-          const targetData = res.result || res.data || res;
-
-          setAnalyticsData({
-            stats: {
-              totalRevenue: targetData?.stats?.totalRevenue ?? 0,
-              totalSales: targetData?.stats?.totalSales ?? 0,
-              activeListings: targetData?.stats?.activeListings ?? 0,
-              conversionRate: targetData?.stats?.conversionRate ?? "0.0%",
-            },
-            monthlySales: Array.isArray(targetData?.monthlySales)
-              ? targetData.monthlySales
-              : [],
-            topProducts: Array.isArray(targetData?.topProducts)
-              ? targetData.topProducts
-              : [],
-          });
+        // ১. এনালিটিক্স ডেটা ফেচ করা
+        const analyticsRes = await getSellerAnalytics(sellerEmail);
+        let targetData = null;
+        if (analyticsRes) {
+          targetData = analyticsRes.result || analyticsRes.data || analyticsRes;
         }
+
+        // ২. 💡 প্রোডাক্ট এপিআই থেকে ডেটা ফেচ করে এই সেলারের টোটাল প্রোডাক্ট কাউন্ট বের করা
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const productsRes = await fetch(`${apiUrl}/api/products`);
+
+        let fetchedProductsCount = 0;
+        if (productsRes.ok) {
+          const productsData = await productsRes.json();
+          // এপিআই স্ট্রাকচার অনুযায়ী অ্যারে খুঁজে বের করা (res.data বা সরাসরি res)
+          const allProducts = Array.isArray(productsData)
+            ? productsData
+            : productsData.data || productsData.result || [];
+
+          // লগইন করা সেলারের ইমেইলের সাথে ফিল্টার করে টোটাল কাউন্ট বের করা
+          const sellerProducts = allProducts.filter(
+            (prod) => prod.sellerEmail === sellerEmail,
+          );
+          fetchedProductsCount = sellerProducts.length;
+        }
+
+        // ৩. স্টেট সেট করা
+        setTotalProductsCount(fetchedProductsCount);
+        setAnalyticsData({
+          stats: {
+            totalRevenue: targetData?.stats?.totalRevenue ?? 0,
+            totalOrders:
+              targetData?.stats?.totalOrders ??
+              targetData?.stats?.totalSales ??
+              0,
+            conversionRate: targetData?.stats?.conversionRate ?? "0.0%",
+          },
+          monthlySales: Array.isArray(targetData?.monthlySales)
+            ? targetData.monthlySales
+            : [],
+          topProducts: Array.isArray(targetData?.topProducts)
+            ? targetData.topProducts
+            : [],
+        });
       } catch (error) {
-        console.error("Error fetching seller analytics from database:", error);
+        console.error("Error fetching data for analytics page:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnalyticsFromDB();
-  }, [sellerEmail]);
+    if (!sessionLoading) {
+      fetchAnalyticsAndProducts();
+    }
+  }, [sellerEmail, sessionLoading]);
 
-  if (loading) {
+  if (sessionLoading || loading) {
     return (
       <div className="flex justify-center py-24 text-white">
         <span className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500 border-t-transparent"></span>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex justify-center py-24 text-slate-400 text-sm">
+        Please log in to view your sales analytics.
       </div>
     );
   }
@@ -76,7 +119,7 @@ const SalesAnalyticsPage = () => {
 
       {/* 📊 Top Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Total Revenue */}
+        {/* 1. Total Revenue */}
         <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-xl flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
@@ -91,29 +134,14 @@ const SalesAnalyticsPage = () => {
           </div>
         </div>
 
-        {/* Orders Delivered */}
+        {/* 2. Total Products (ডাইনামিকালি ফিল্টার করা কাউন্ট) */}
         <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-xl flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Orders Delivered
+              Total Products
             </p>
             <h3 className="text-2xl font-bold text-slate-100">
-              {analyticsData?.stats?.totalSales ?? 0} Items
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-            <FontAwesomeIcon icon={faCartShopping} className="w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Active Listings */}
-        <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-xl flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-              Active Listings
-            </p>
-            <h3 className="text-2xl font-bold text-slate-100">
-              {analyticsData?.stats?.activeListings ?? 0} Products
+              {totalProductsCount} Items
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
@@ -121,7 +149,22 @@ const SalesAnalyticsPage = () => {
           </div>
         </div>
 
-        {/* Conversion Rate */}
+        {/* 3. Total Orders */}
+        <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-xl flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Total Orders
+            </p>
+            <h3 className="text-2xl font-bold text-slate-100">
+              {analyticsData?.stats?.totalOrders ?? 0} Orders
+            </h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+            <FontAwesomeIcon icon={faCartShopping} className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* 4. Conversion Rate */}
         <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl shadow-xl flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
@@ -168,14 +211,12 @@ const SalesAnalyticsPage = () => {
                 const barHeight = `${(currentAmount / maxSalesAmount) * 100}%`;
                 return (
                   <div
-                    key={data.month} // ✅ FIXED: Using data.month ensures a unique, consistent key identification string
+                    key={data.month}
                     className="flex-1 flex flex-col items-center group h-full justify-end relative"
                   >
-                    {/* Tooltip */}
                     <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-2 bg-slate-950 border border-slate-800 text-[11px] px-2 py-1 rounded-md text-cyan-400 font-mono pointer-events-none transition-opacity duration-200 shadow-xl z-10 whitespace-nowrap">
                       ৳{currentAmount.toLocaleString()}
                     </div>
-                    {/* Dynamic Bar */}
                     <div
                       style={{ height: barHeight }}
                       className="w-full bg-linear-to-t from-cyan-600/40 to-cyan-400 hover:from-cyan-500 hover:to-cyan-300 rounded-t-lg transition-all duration-500 cursor-pointer shadow-lg shadow-cyan-500/5 group-hover:shadow-cyan-400/20"
@@ -208,7 +249,6 @@ const SalesAnalyticsPage = () => {
               </p>
             ) : (
               analyticsData?.topProducts?.map((product, index) => (
-                // ✅ FIXED fallback: prioritizing string ids, fall back securely to string-combined indices if undefined
                 <div
                   key={product.id || product._id || `prod-${index}`}
                   className="space-y-2"

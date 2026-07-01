@@ -1,6 +1,9 @@
+/** @format */
+
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useForm, Controller } from "react-hook-form";
 import {
@@ -23,9 +26,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { authClient } from "../../../lib/auth-client";
+import { clearAuthToken, primeBackendToken } from "@/lib/api/server";
 import { toast } from "react-toastify";
 
 export default function SigninPage() {
+  const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,51 +48,76 @@ export default function SigninPage() {
     },
   });
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const waitForSession = async () => {
+    for (let i = 0; i < 8; i += 1) {
+      const result = await authClient.getSession();
+      if (result?.data?.session && result?.data?.user) return true;
+      await sleep(150);
+    }
+    return false;
+  };
+
+  const finishLogin = async (toastId, successMessage) => {
+    const hasSession = await waitForSession();
+    if (!hasSession) {
+      toast.update(toastId, {
+        render:
+          "Login succeeded but session is not ready. Please try once more.",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    await primeBackendToken();
+
+    toast.update(toastId, {
+      render: successMessage,
+      type: "success",
+      isLoading: false,
+      autoClose: 1500,
+    });
+
+    reset();
+    router.replace("/dashboard");
+  };
+
   const onSubmit = async (data) => {
     setIsLoading(true);
+    clearAuthToken();
     const toastId = toast.loading("Signing in... Please wait.");
 
     try {
-      await authClient.signIn.email(
-        {
-          email: data.email,
-          password: data.password,
-          callbackURL: "/",
-        },
-        {
-          onRequest: () => setIsLoading(true),
-          onSuccess: () => {
-            toast.update(toastId, {
-              render: "Logged in successfully! Welcome back.",
-              type: "success",
-              isLoading: false,
-              autoClose: 2000,
-            });
-            reset();
-            setTimeout(() => {
-              window.location.href = "/dashboard";
-            }, 1500);
-          },
-          onError: (ctx) => {
-            setIsLoading(false);
-            toast.update(toastId, {
-              render: ctx.error.message || "Invalid email or password.",
-              type: "error",
-              isLoading: false,
-              autoClose: 3000,
-            });
-          },
-        },
-      );
+      const result = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
+        callbackURL: "/dashboard",
+      });
+
+      if (result?.error) {
+        toast.update(toastId, {
+          render: result.error.message || "Invalid email or password.",
+          type: "error",
+          isLoading: false,
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      await finishLogin(toastId, "Logged in successfully! Welcome back.");
     } catch (err) {
       console.error("Signin failed:", err);
-      setIsLoading(false);
       toast.update(toastId, {
         render: "Something went wrong. Please try again.",
         type: "error",
         isLoading: false,
         autoClose: 3000,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -111,7 +141,9 @@ export default function SigninPage() {
             </h1>
             <p className="text-sm text-on-surface-variant font-sans">
               Sign in to manage your pre-loved goods on{" "}
-              <span className="text-primary font-semibold font-sans">NaiSell Hub</span>
+              <span className="text-primary font-semibold font-sans">
+                NaiSell Hub
+              </span>
             </p>
           </div>
 
@@ -132,19 +164,29 @@ export default function SigninPage() {
                   });
                 } catch (err) {
                   console.error("Google login error:", err);
-                  toast.update(toastId, { render: err.message || "Google login failed", type: "error", isLoading: false, autoClose: 3000 });
+                  toast.update(toastId, {
+                    render: err.message || "Google login failed",
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 3000,
+                  });
                 }
               }}
-              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-[8px] bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
+              className="w-full border border-outline-variant hover:border-outline text-on-surface font-medium h-11 rounded-2xl bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-200 text-sm flex items-center justify-center gap-2.5"
             >
-              <FontAwesomeIcon icon={faGoogle} className="text-base text-primary" />
+              <FontAwesomeIcon
+                icon={faGoogle}
+                className="text-base text-primary"
+              />
               Log in with Google
             </Button>
 
             {/* Divider */}
             <div className="flex items-center my-1 w-full">
               <div className="flex-1 border-t border-outline-variant/60"></div>
-              <span className="px-3 text-[11px] text-outline uppercase tracking-wider font-semibold">Or</span>
+              <span className="px-3 text-[11px] text-outline uppercase tracking-wider font-semibold">
+                Or
+              </span>
               <div className="flex-1 border-t border-outline-variant/60"></div>
             </div>
 
@@ -176,7 +218,7 @@ export default function SigninPage() {
                       {...field}
                       type="email"
                       placeholder="you@example.com"
-                      className="w-full pl-10 pr-3 py-2 bg-surface-container-low border border-outline-variant text-on-surface placeholder-outline hover:border-outline focus:outline-none focus:border-primary rounded-[8px] transition-colors text-sm h-11"
+                      className="w-full pl-10 pr-3 py-2 bg-surface-container-low border border-outline-variant text-on-surface placeholder-outline hover:border-outline focus:outline-none focus:border-primary rounded-2xl transition-colors text-sm h-11"
                     />
                   </div>
                   <FieldError className="text-xs text-error mt-1">
@@ -216,7 +258,7 @@ export default function SigninPage() {
                       {...field}
                       type={isVisible ? "text" : "password"}
                       placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-2 bg-surface-container-low border border-outline-variant text-on-surface placeholder-outline hover:border-outline focus:outline-none focus:border-primary rounded-[8px] transition-colors text-sm h-11"
+                      className="w-full pl-10 pr-10 py-2 bg-surface-container-low border border-outline-variant text-on-surface placeholder-outline hover:border-outline focus:outline-none focus:border-primary rounded-2xl transition-colors text-sm h-11"
                     />
                     <button
                       className="absolute right-3 focus:outline-none text-outline hover:text-primary transition-colors z-10"
@@ -237,7 +279,7 @@ export default function SigninPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-container text-on-primary font-semibold rounded-[8px] text-sm h-12 shadow-sm transition-all duration-300 mt-2 flex items-center justify-center gap-2"
+              className="w-full bg-primary hover:bg-primary-container text-on-primary font-semibold rounded-2xl text-sm h-12 shadow-sm transition-all duration-300 mt-2 flex items-center justify-center gap-2"
               isLoading={isLoading}
               isDisabled={isLoading}
             >
@@ -258,43 +300,87 @@ export default function SigninPage() {
 
             {/* Demo Login Buttons */}
             <div className="pt-4 border-t border-outline-variant/20">
-              <p className="text-xs text-center text-outline uppercase tracking-wider font-semibold mb-3 font-sans">Quick Demo Login</p>
+              <p className="text-xs text-center text-outline uppercase tracking-wider font-semibold mb-3 font-sans">
+                Quick Demo Login
+              </p>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { role: "Buyer", email: "demo@naisell.com", name: "Demo Buyer", password: "password123", color: "bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" },
-                  { role: "Seller", email: "seller@naisell.com", name: "Demo Seller", password: "password123", color: "bg-secondary-container/20 text-secondary-container hover:bg-secondary-container/30 border-secondary-container/30" },
-                  { role: "Admin", email: "admin@admin.com", name: "Demo Admin", password: "admin321", color: "bg-tertiary-container/20 text-on-tertiary-container hover:bg-tertiary-container/30 border-tertiary-container/30" },
+                  {
+                    role: "Buyer",
+                    email: "demo@naisell.com",
+                    name: "Demo Buyer",
+                    password: "password123",
+                    color:
+                      "bg-primary/10 text-primary hover:bg-primary/20 border-primary/20",
+                  },
+                  {
+                    role: "Seller",
+                    email: "seller@naisell.com",
+                    name: "Demo Seller",
+                    password: "password123",
+                    color:
+                      "bg-secondary-container/20 text-secondary-container hover:bg-secondary-container/30 border-secondary-container/30",
+                  },
+                  {
+                    role: "Admin",
+                    email: "admin@naisell.com",
+                    name: "Demo Admin",
+                    password: "admin321",
+                    color:
+                      "bg-tertiary-container/20 text-on-tertiary-container hover:bg-tertiary-container/30 border-tertiary-container/30",
+                  },
                 ].map((demo) => (
                   <button
                     key={demo.role}
                     type="button"
                     onClick={async () => {
                       setIsLoading(true);
-                      const toastId = toast.loading(`Signing in as ${demo.role}...`);
+                      clearAuthToken();
+                      const toastId = toast.loading(
+                        `Signing in as ${demo.role}...`,
+                      );
                       try {
                         // First try to create the user (ignore error if exists)
                         await fetch("/api/seed", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ email: demo.email, password: demo.password, name: demo.name, role: demo.role.toLowerCase() }),
+                          body: JSON.stringify({
+                            email: demo.email,
+                            password: demo.password,
+                            name: demo.name,
+                            role: demo.role.toLowerCase(),
+                          }),
                         });
 
                         // Then login
-                        await authClient.signIn.email(
-                          { email: demo.email, password: demo.password, callbackURL: "/" },
-                          {
-                            onSuccess: () => {
-                              toast.update(toastId, { render: `Logged in as ${demo.role}!`, type: "success", isLoading: false, autoClose: 1500 });
-                              setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
-                            },
-                            onError: (ctx) => {
-                              toast.update(toastId, { render: ctx.error?.message || "Login failed", type: "error", isLoading: false, autoClose: 3000 });
-                              setIsLoading(false);
-                            },
-                          }
+                        const loginResult = await authClient.signIn.email({
+                          email: demo.email,
+                          password: demo.password,
+                          callbackURL: "/dashboard",
+                        });
+
+                        if (loginResult?.error) {
+                          toast.update(toastId, {
+                            render: loginResult.error.message || "Login failed",
+                            type: "error",
+                            isLoading: false,
+                            autoClose: 3000,
+                          });
+                          return;
+                        }
+
+                        await finishLogin(
+                          toastId,
+                          `Logged in as ${demo.role}!`,
                         );
                       } catch {
-                        toast.update(toastId, { render: "Login failed", type: "error", isLoading: false, autoClose: 3000 });
+                        toast.update(toastId, {
+                          render: "Login failed",
+                          type: "error",
+                          isLoading: false,
+                          autoClose: 3000,
+                        });
+                      } finally {
                         setIsLoading(false);
                       }
                     }}
